@@ -96,56 +96,73 @@ jobs:
           dart run slang
       
       - name: Build Windows
-        shell: cmd
+        shell: pwsh
         run: |
-          echo "=== Configuring Flutter for Windows ==="
+          Write-Host "=== Flutter Environment Check ==="
+          flutter --version
+          flutter doctor -v
+          
+          Write-Host "=== Configuring Flutter for Windows ==="
           flutter config --enable-windows-desktop
-          if %ERRORLEVEL% neq 0 (
-            echo "Failed to enable Windows desktop"
-            exit /b 1
-          )
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to enable Windows desktop"
+            exit 1
+          }
           
-          echo "=== Cleaning previous builds ==="
-          if exist build\windows rmdir /s /q build\windows
+          Write-Host "=== Cleaning previous builds ==="
+          if (Test-Path "build\windows") {
+            Remove-Item -Recurse -Force "build\windows"
+          }
           flutter clean
-          if %ERRORLEVEL% neq 0 (
-            echo "Flutter clean failed"
-            exit /b 1
-          )
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Flutter clean failed"
+            exit 1
+          }
           
-          echo "=== Getting dependencies ==="
+          Write-Host "=== Getting dependencies ==="
           flutter pub get
-          if %ERRORLEVEL% neq 0 (
-            echo "Flutter pub get failed"
-            exit /b 1
-          )
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Flutter pub get failed"
+            exit 1
+          }
           
-          echo "=== Checking Flutter doctor ==="
-          flutter doctor
+          Write-Host "=== Checking target file ==="
+          if (-not (Test-Path "lib\main_prod.dart")) {
+            Write-Host "Target file lib\main_prod.dart not found, checking alternatives:"
+            Get-ChildItem lib -Filter "main*.dart" | Select-Object Name
+            if (Test-Path "lib\main.dart") {
+              $target = "lib\main.dart"
+            } else {
+              Write-Error "No suitable main file found"
+              exit 1
+            }
+          } else {
+            $target = "lib\main_prod.dart"
+          }
           
-          echo "=== Starting Windows build ==="
-          flutter build windows --target lib/main_prod.dart --release --no-tree-shake-icons --verbose
-          if %ERRORLEVEL% neq 0 (
-            echo "Flutter build windows failed with exit code %ERRORLEVEL%"
-            exit /b 1
-          )
+          Write-Host "=== Starting Windows build with target: $target ==="
+          flutter build windows --target $target --release --verbose
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Flutter build windows failed with exit code $LASTEXITCODE"
+            exit 1
+          }
           
-          echo "=== Build completed, checking output ==="
-          if exist build\windows (
-            echo "Windows build directory exists"
-            dir build\windows /s
-          ) else (
-            echo "ERROR: Windows build directory not created!"
-            echo "Current directory contents:"
-            dir
-            if exist build (
-              echo "Build directory contents:"
-              dir build /s
-            ) else (
-              echo "No build directory found at all!"
-            )
-            exit /b 1
-          )
+          Write-Host "=== Build completed, checking output ==="
+          if (Test-Path "build\windows") {
+            Write-Host "Windows build directory exists"
+            Get-ChildItem -Path "build\windows" -Recurse | Select-Object FullName, Length | Out-String
+          } else {
+            Write-Error "Windows build directory not created!"
+            Write-Host "Current directory contents:"
+            Get-ChildItem | Select-Object Name, Length | Out-String
+            if (Test-Path "build") {
+              Write-Host "Build directory contents:"
+              Get-ChildItem -Path "build" -Recurse | Select-Object FullName, Length | Out-String
+            } else {
+              Write-Host "No build directory found at all!"
+            }
+            exit 1
+          }
       
       - name: Create Windows ZIP
         shell: pwsh
