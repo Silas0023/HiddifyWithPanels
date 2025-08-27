@@ -32,6 +32,9 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Prepare Android
+        run: make android-prepare
+      
       - name: Generate code
         run: |
           dart run build_runner build --delete-conflicting-outputs
@@ -79,13 +82,13 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Prepare Windows
+        run: make windows-prepare
+      
       - name: Generate code
         run: |
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
-      
-      - name: Prepare Windows
-        run: make windows-prepare
       
       - name: Build Windows
         run: flutter build windows --target lib/main_prod.dart --release
@@ -126,13 +129,13 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Prepare macOS
+        run: make macos-prepare
+      
       - name: Generate code
         run: |
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
-      
-      - name: Prepare macOS
-        run: make macos-prepare
       
       - name: Apply Sentry patches
         run: |
