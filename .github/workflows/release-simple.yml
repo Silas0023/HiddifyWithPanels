@@ -100,16 +100,35 @@ jobs:
         run: |
           echo "=== Configuring Flutter for Windows ==="
           flutter config --enable-windows-desktop
+          if %ERRORLEVEL% neq 0 (
+            echo "Failed to enable Windows desktop"
+            exit /b 1
+          )
           
           echo "=== Cleaning previous builds ==="
           if exist build\windows rmdir /s /q build\windows
           flutter clean
+          if %ERRORLEVEL% neq 0 (
+            echo "Flutter clean failed"
+            exit /b 1
+          )
           
           echo "=== Getting dependencies ==="
           flutter pub get
+          if %ERRORLEVEL% neq 0 (
+            echo "Flutter pub get failed"
+            exit /b 1
+          )
+          
+          echo "=== Checking Flutter doctor ==="
+          flutter doctor
           
           echo "=== Starting Windows build ==="
           flutter build windows --target lib/main_prod.dart --release --no-tree-shake-icons --verbose
+          if %ERRORLEVEL% neq 0 (
+            echo "Flutter build windows failed with exit code %ERRORLEVEL%"
+            exit /b 1
+          )
           
           echo "=== Build completed, checking output ==="
           if exist build\windows (
@@ -117,6 +136,14 @@ jobs:
             dir build\windows /s
           ) else (
             echo "ERROR: Windows build directory not created!"
+            echo "Current directory contents:"
+            dir
+            if exist build (
+              echo "Build directory contents:"
+              dir build /s
+            ) else (
+              echo "No build directory found at all!"
+            )
             exit /b 1
           )
       
