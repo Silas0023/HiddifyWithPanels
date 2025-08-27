@@ -98,38 +98,75 @@ jobs:
       - name: Build Windows
         shell: cmd
         run: |
+          echo "=== Configuring Flutter for Windows ==="
           flutter config --enable-windows-desktop
+          
+          echo "=== Cleaning previous builds ==="
           if exist build\windows rmdir /s /q build\windows
           flutter clean
+          
+          echo "=== Getting dependencies ==="
           flutter pub get
-          flutter build windows --target lib/main_prod.dart --release --no-tree-shake-icons
+          
+          echo "=== Starting Windows build ==="
+          flutter build windows --target lib/main_prod.dart --release --no-tree-shake-icons --verbose
+          
+          echo "=== Build completed, checking output ==="
+          if exist build\windows (
+            echo "Windows build directory exists"
+            dir build\windows /s
+          ) else (
+            echo "ERROR: Windows build directory not created!"
+            exit /b 1
+          )
       
       - name: Create Windows ZIP
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}"
-          Write-Host "Checking build output structure:"
-          Get-ChildItem -Path "build" -Recurse -Directory | Select-Object FullName
+          Write-Host "=== Checking build output structure ==="
           
-          # Find the actual release directory
-          $releasePath = ""
-          if (Test-Path "build\windows\x64\runner\Release") {
-            $releasePath = "build\windows\x64\runner\Release\*"
-          } elseif (Test-Path "build\windows\runner\Release") {
-            $releasePath = "build\windows\runner\Release\*"
-          } else {
-            # Find any Release directory under build/windows
-            $releaseDir = Get-ChildItem -Path "build\windows" -Recurse -Directory -Name "Release" | Select-Object -First 1
-            if ($releaseDir) {
-              $releasePath = "build\windows\$releaseDir\*"
-            } else {
-              Write-Error "Could not find Release directory"
-              exit 1
-            }
+          # Check if build directory exists
+          if (-not (Test-Path "build")) {
+            Write-Error "Build directory does not exist!"
+            exit 1
           }
           
-          Write-Host "Using release path: $releasePath"
-          Compress-Archive -Path $releasePath -DestinationPath "Hiddify-Windows-x64-$version.zip"
+          Write-Host "Build directory contents:"
+          Get-ChildItem -Path "build" -Recurse | Select-Object FullName, Length
+          
+          # Check for Windows build specifically
+          if (-not (Test-Path "build\windows")) {
+            Write-Error "Windows build directory does not exist! Flutter build may have failed."
+            Write-Host "Available directories in build/:"
+            Get-ChildItem -Path "build" -Directory | Select-Object Name
+            exit 1
+          }
+          
+          Write-Host "Windows build directory contents:"
+          Get-ChildItem -Path "build\windows" -Recurse | Select-Object FullName, Length
+          
+          # Find the actual executable and required files
+          $exeFiles = Get-ChildItem -Path "build\windows" -Recurse -Filter "*.exe" | Where-Object { $_.Name -eq "hiddify.exe" -or $_.Name -eq "Hiddify.exe" -or $_.Name.EndsWith(".exe") }
+          
+          if ($exeFiles.Count -eq 0) {
+            Write-Error "No executable files found in Windows build!"
+            exit 1
+          }
+          
+          Write-Host "Found executable files:"
+          $exeFiles | ForEach-Object { Write-Host $_.FullName }
+          
+          # Use the directory containing the main executable
+          $mainExe = $exeFiles | Select-Object -First 1
+          $releaseDir = $mainExe.Directory.FullName
+          
+          Write-Host "Using release directory: $releaseDir"
+          Write-Host "Files to include in ZIP:"
+          Get-ChildItem -Path $releaseDir | Select-Object Name, Length
+          
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath "Hiddify-Windows-x64-$version.zip"
+          Write-Host "ZIP created successfully: Hiddify-Windows-x64-$version.zip"
       
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
