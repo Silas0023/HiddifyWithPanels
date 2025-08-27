@@ -108,7 +108,28 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}"
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath "Hiddify-Windows-x64-$version.zip"
+          Write-Host "Checking build output structure:"
+          Get-ChildItem -Path "build" -Recurse -Directory | Select-Object FullName
+          
+          # Find the actual release directory
+          $releasePath = ""
+          if (Test-Path "build\windows\x64\runner\Release") {
+            $releasePath = "build\windows\x64\runner\Release\*"
+          } elseif (Test-Path "build\windows\runner\Release") {
+            $releasePath = "build\windows\runner\Release\*"
+          } else {
+            # Find any Release directory under build/windows
+            $releaseDir = Get-ChildItem -Path "build\windows" -Recurse -Directory -Name "Release" | Select-Object -First 1
+            if ($releaseDir) {
+              $releasePath = "build\windows\$releaseDir\*"
+            } else {
+              Write-Error "Could not find Release directory"
+              exit 1
+            }
+          }
+          
+          Write-Host "Using release path: $releasePath"
+          Compress-Archive -Path $releasePath -DestinationPath "Hiddify-Windows-x64-$version.zip"
       
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
