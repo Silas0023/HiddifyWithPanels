@@ -73,6 +73,11 @@ jobs:
         with:
           submodules: recursive
       
+      - name: Setup Visual Studio Dev Environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -91,14 +96,10 @@ jobs:
           dart run slang
       
       - name: Build Windows
-        env:
-          FLUTTER_BUILD_MODE: release
-          VCPKG_ROOT: ''
-          CMAKE_GENERATOR: "Visual Studio 17 2022"
-          CMAKE_GENERATOR_PLATFORM: "x64"
+        shell: cmd
         run: |
           flutter config --enable-windows-desktop
-          if (Test-Path build\windows) { Remove-Item -Recurse -Force build\windows }
+          if exist build\windows rmdir /s /q build\windows
           flutter clean
           flutter pub get
           flutter build windows --target lib/main_prod.dart --release --no-tree-shake-icons
