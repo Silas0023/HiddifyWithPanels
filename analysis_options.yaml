@@ -1,8 +1,8 @@
 include: package:lint/strict.yaml
 
 analyzer:
-  plugins:
-    - custom_lint
+  # plugins:
+  #   - custom_lint
   exclude:
     - "libcore/**"
     - "**.g.dart"
@@ -16,7 +16,7 @@ linter:
     sort_unnamed_constructors_first: false
     avoid_classes_with_only_static_members: false
 
-custom_lint:
-  rules:
-    # Enable one rule
-    - provider_parameters
+# custom_lint:
+#   rules:
+#     # Enable one rule
+#     - provider_parameters

@@ -1,6 +1,8 @@
 targets:
   $default:
     builders:
+      custom_lint_builder:custom_lint:
+        enabled: false
       json_serializable:
         options:
           explicit_to_json: true

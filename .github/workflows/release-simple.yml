@@ -1,0 +1,278 @@
+name: Simple Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Generate code
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          dart run slang
+      
+      - name: Prepare Android
+        run: make android-prepare
+      
+      - name: Build Android APK
+        run: flutter build apk --target lib/main_prod.dart --release
+      
+      - name: Build Android App Bundle
+        run: flutter build appbundle --target lib/main_prod.dart --release
+      
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Hiddify-Android-${{ github.ref_name }}.apk
+          mv build/app/outputs/bundle/release/app-release.aab build/app/outputs/bundle/release/Hiddify-Android-${{ github.ref_name }}.aab
+      
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/Hiddify-Android-*.apk
+      
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: build/app/outputs/bundle/release/Hiddify-Android-*.aab
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Generate code
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          dart run slang
+      
+      - name: Prepare Windows
+        run: make windows-prepare
+      
+      - name: Build Windows
+        run: flutter build windows --target lib/main_prod.dart --release
+      
+      - name: Create Windows ZIP
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath "Hiddify-Windows-x64-$version.zip"
+      
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: Hiddify-Windows-x64-*.zip
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-13
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          architecture: x64
+      
+      - name: Setup CocoaPods
+        run: |
+          sudo gem install cocoapods
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Generate code
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          dart run slang
+      
+      - name: Prepare macOS
+        run: make macos-prepare
+      
+      - name: Apply Sentry patches
+        run: |
+          # Fix Sentry C++ compilation issues
+          if [ -f "macos/Pods/Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp" ]; then
+            sed -i '' 's/static std::terminate_handler g_originalTerminateHandler;/\/\/ static std::terminate_handler g_originalTerminateHandler;\nstatic void* g_originalTerminateHandler = NULL;/' macos/Pods/Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp
+            sed -i '' 's/g_originalTerminateHandler = std::set_terminate(CPPExceptionTerminate);/\/\/ g_originalTerminateHandler = std::set_terminate(CPPExceptionTerminate);/' macos/Pods/Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp
+            sed -i '' 's/std::set_terminate(g_originalTerminateHandler);/\/\/ std::set_terminate(g_originalTerminateHandler);/' macos/Pods/Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp
+            sed -i '' 's/g_originalTerminateHandler();/\/\/ g_originalTerminateHandler();/' macos/Pods/Sentry/Sources/SentryCrash/Recording/Monitors/SentryCrashMonitor_CPPException.cpp
+          fi
+          
+          # Fix ucontext64_t issue
+          if [ -f "macos/Pods/Sentry/Sources/SentryCrash/Recording/Tools/SentryCrashMachineContext.c" ]; then
+            sed -i '' '/#ifdef __arm64__/a\
+            #include <sys/_types/_ucontext64.h>' macos/Pods/Sentry/Sources/SentryCrash/Recording/Tools/SentryCrashMachineContext.c
+          fi
+      
+      - name: Build macOS app
+        run: flutter build macos --target lib/main_prod.dart --release
+      
+      - name: Create DMG
+        run: |
+          # Install create-dmg if not exists
+          if ! command -v create-dmg &> /dev/null; then
+            brew install create-dmg
+          fi
+          
+          # Create DMG
+          create-dmg \
+            --volname "Hiddify" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Hiddify.app" 175 120 \
+            --hide-extension "Hiddify.app" \
+            --app-drop-link 425 120 \
+            "Hiddify-macOS-${{ github.ref_name }}.dmg" \
+            "build/macos/Build/Products/Release/"
+      
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: Hiddify-macOS-*.dmg
+
+  create-release:
+    name: Create Release
+    needs: [build-android, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: ./artifacts
+      
+      - name: Download Android AAB
+        uses: actions/download-artifact@v4
+        with:
+          name: android-aab
+          path: ./artifacts
+      
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+          path: ./artifacts
+      
+      - name: Download macOS build
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-dmg
+          path: ./artifacts
+      
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Generate Release Notes
+        id: notes
+        run: |
+          cat << EOF > release_notes.md
+          ## 🎉 Release ${{ steps.get_version.outputs.VERSION }}
+          
+          ### 📦 Downloads
+          
+          | Platform | File | Description |
+          |----------|------|-------------|
+          | Android | \`Hiddify-Android-${{ steps.get_version.outputs.VERSION }}.apk\` | Direct APK installation |
+          | Android | \`Hiddify-Android-${{ steps.get_version.outputs.VERSION }}.aab\` | Google Play Store bundle |
+          | Windows | \`Hiddify-Windows-x64-${{ steps.get_version.outputs.VERSION }}.zip\` | Windows x64 build |
+          | macOS | \`Hiddify-macOS-${{ steps.get_version.outputs.VERSION }}.dmg\` | macOS universal build |
+          
+          ### 📋 Installation Instructions
+          
+          #### Android
+          1. Download the APK file
+          2. Enable "Install from unknown sources" in your device settings
+          3. Open the APK file to install
+          
+          #### Windows
+          1. Download and extract the ZIP file
+          2. Run \`Hiddify.exe\` from the extracted folder
+          3. Windows may show a security warning - click "More info" and "Run anyway"
+          
+          #### macOS
+          1. Download the DMG file
+          2. Open the DMG and drag Hiddify to your Applications folder
+          3. For first run: Right-click the app and select "Open" to bypass Gatekeeper
+          4. If you see "app is damaged" error, run in Terminal: \`xattr -cr /Applications/Hiddify.app\`
+          
+          ### 🔄 What's Changed
+          
+          Please check the [commit history](https://github.com/${{ github.repository }}/compare/previous-tag...${{ steps.get_version.outputs.VERSION }}) for detailed changes.
+          
+          ---
+          *This release was automatically built and published via GitHub Actions*
+          EOF
+      
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: Hiddify ${{ steps.get_version.outputs.VERSION }}
+          bodyFile: release_notes.md
+          artifacts: |
+            ./artifacts/*
+          artifactContentType: application/octet-stream
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
