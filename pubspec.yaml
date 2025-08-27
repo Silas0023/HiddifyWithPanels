@@ -13,7 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  intl: ^0.20.2
+  intl: any  # Flutter SDK pins this to 0.20.2
   humanizer: ^3.0.1
   # lucy_editor: ^1.0.5
   # re_highlight: ^0.0.3
