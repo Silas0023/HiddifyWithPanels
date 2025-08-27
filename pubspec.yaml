@@ -13,8 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  intl: any  # Flutter SDK pins this to 0.20.2
-  humanizer: ^3.0.1
+  humanizer: ^3.0.0
   # lucy_editor: ^1.0.5
   # re_highlight: ^0.0.3
   # json_editor_flutter: ^1.4.2
@@ -112,6 +111,8 @@ dev_dependencies:
 dependency_overrides:
   # drift & package_info_plus are not compatible
   web: ^1.0.0
+  # Fix intl version conflict
+  intl: ^0.20.0
 
 flutter:
   uses-material-design: true
