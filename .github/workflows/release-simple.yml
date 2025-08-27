@@ -91,7 +91,13 @@ jobs:
           dart run slang
       
       - name: Build Windows
-        run: flutter build windows --target lib/main_prod.dart --release
+        env:
+          FLUTTER_BUILD_MODE: release
+        run: |
+          flutter config --enable-windows-desktop
+          if (Test-Path build\windows) { Remove-Item -Recurse -Force build\windows }
+          flutter clean
+          flutter build windows --target lib/main_prod.dart --release --verbose
       
       - name: Create Windows ZIP
         shell: pwsh
