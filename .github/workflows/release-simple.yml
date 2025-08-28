@@ -65,7 +65,7 @@ jobs:
 
   build-windows:
     name: Build Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     
     steps:
       - name: Checkout code
@@ -73,10 +73,32 @@ jobs:
         with:
           submodules: recursive
       
-      - name: Setup CMake
-        uses: lukka/get-cmake@latest
-        with:
-          cmakeVersion: '3.28.3'
+      - name: Ensure Visual Studio Components
+        shell: pwsh
+        run: |
+          Write-Host "=== Ensuring Visual Studio components are installed ==="
+          # Check if VS is installed
+          $vsWhere = "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vsWhere) {
+            $vsPath = & $vsWhere -latest -products * -requires Microsoft.VisualStudio.Workload.NativeDesktop -property installationPath
+            Write-Host "VS Installation Path: $vsPath"
+            
+            # Try to ensure components are installed
+            $vsInstaller = "${Env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vs_installer.exe"
+            if (Test-Path $vsInstaller) {
+              Write-Host "Ensuring Desktop development with C++ and latest SDK..."
+              Start-Process -FilePath $vsInstaller -ArgumentList @(
+                "modify",
+                "--installPath", "`"$vsPath`"",
+                "--add", "Microsoft.VisualStudio.Workload.NativeDesktop",
+                "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                "--add", "Microsoft.VisualStudio.Component.Windows10SDK.22621",
+                "--add", "Microsoft.VisualStudio.Component.VC.CMake.Project",
+                "--add", "Component.Microsoft.VisualStudio.Component.VC.CMake.Project",
+                "--quiet", "--norestart"
+              ) -Wait -NoNewWindow
+            }
+          }
       
       - name: Setup Visual Studio Dev Environment
         uses: ilammy/msvc-dev-cmd@v1
@@ -89,51 +111,108 @@ jobs:
           flutter-version: '3.24.0'
           channel: 'stable'
       
-      - name: Get dependencies
-        run: flutter pub get
-      
-      - name: Prepare Windows
-        run: make windows-prepare
-      
-      - name: Generate code
+      - name: Flutter Doctor Verbose
+        shell: pwsh
         run: |
+          Write-Host "=== Flutter Doctor Verbose Check ==="
+          flutter doctor -v
+      
+      - name: Clean and Restore Environment
+        shell: pwsh
+        run: |
+          Write-Host "=== Cleaning build artifacts and cache ==="
+          flutter clean
+          if (Test-Path ".dart_tool") { 
+            Write-Host "Removing .dart_tool directory..."
+            Remove-Item -Recurse -Force ".dart_tool" 
+          }
+          if (Test-Path "build\windows") { 
+            Write-Host "Removing build\windows directory..."
+            Remove-Item -Recurse -Force "build\windows" 
+          }
+          Write-Host "=== Getting dependencies ==="
+          flutter pub get
+      
+      - name: Generate Code
+        shell: pwsh
+        run: |
+          Write-Host "=== Generating code ==="
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
       
-      - name: Build Windows
+      - name: Prepare Windows (Download libcore)
         shell: pwsh
         run: |
-          Write-Host "=== Flutter Environment Check ==="
-          flutter --version
-          flutter doctor
+          Write-Host "=== Preparing Windows (downloading libcore) ==="
+          # Use PowerShell to run make command
+          $makeExe = (where.exe make)[0]
+          if ($makeExe) {
+            & $makeExe windows-prepare
+          } else {
+            Write-Host "Make not found, trying alternative approach..."
+            # Run the commands that make windows-prepare would run
+            flutter pub get
+            dart run build_runner build --delete-conflicting-outputs
+            dart run slang
+            # Download libcore manually if needed
+            $libcoreScript = "scripts/download_libcore.dart"
+            if (Test-Path $libcoreScript) {
+              dart run $libcoreScript windows
+            }
+          }
+      
+      - name: Build Windows Verbose
+        shell: pwsh
+        run: |
+          Write-Host "=== Building Windows application with verbose output ==="
           
-          Write-Host "=== Configuring Flutter for Windows ==="
+          # Enable Windows desktop
           flutter config --enable-windows-desktop
           
-          Write-Host "=== Cleaning previous builds ==="
-          flutter clean
-          
-          Write-Host "=== Getting dependencies ==="
-          flutter pub get
-          
-          Write-Host "=== Building Windows application ==="
-          flutter build windows --target lib/main_prod.dart --release
+          # Build with verbose output to catch the real error
+          Write-Host "Starting build with verbose logging..."
+          flutter build windows --target lib/main_prod.dart --release -v
           
           if ($LASTEXITCODE -ne 0) {
             Write-Error "Flutter build failed with exit code $LASTEXITCODE"
-            exit 1
+            
+            Write-Host "=== Attempting debug build to get more information ==="
+            flutter build windows --target lib/main_prod.dart --debug -v
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Debug build also failed"
+              exit 1
+            } else {
+              Write-Host "Debug build succeeded, the issue might be with release optimizations"
+              exit 1
+            }
           }
           
-          Write-Host "=== Build completed, checking output ==="
-          if (Test-Path "build\windows\x64\runner\Release") {
-            Write-Host "Release build found at build\windows\x64\runner\Release"
-            Get-ChildItem "build\windows\x64\runner\Release" | Select-Object Name, Length
-          } elseif (Test-Path "build\windows\runner\Release") {
-            Write-Host "Release build found at build\windows\runner\Release"
-            Get-ChildItem "build\windows\runner\Release" | Select-Object Name, Length
-          } else {
+          Write-Host "=== Build completed successfully ==="
+      
+      - name: Verify Build Output
+        shell: pwsh
+        run: |
+          Write-Host "=== Verifying build output ==="
+          
+          $releasePaths = @(
+            "build\windows\x64\runner\Release",
+            "build\windows\runner\Release"
+          )
+          
+          $found = $false
+          foreach ($path in $releasePaths) {
+            if (Test-Path $path) {
+              Write-Host "Found release build at: $path"
+              Get-ChildItem $path | Select-Object Name, Length
+              $found = $true
+              break
+            }
+          }
+          
+          if (-not $found) {
             Write-Error "Windows build output not found!"
-            Write-Host "Searching for exe files..."
+            Write-Host "Searching for exe files in build directory..."
             Get-ChildItem -Path "build" -Recurse -Filter "*.exe" | Select-Object FullName
             exit 1
           }
