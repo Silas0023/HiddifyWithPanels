@@ -140,14 +140,17 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
 
+      - name: Install make with Chocolatey
+        run: choco install make -y
+        
       - name: Prepare for Windows
-        shell: bash
+        shell: cmd
         run: |
           make windows-prepare
           tree
 
       - name: Build Windows
-        shell: bash
+        shell: cmd
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
