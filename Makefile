@@ -182,9 +182,9 @@ android-apk-libs: android-libs
 android-aab-libs: android-libs
 
 windows-libs:
-	$(MKDIR) $(DESKTOP_OUT) || echo Folder already exists. Skipping...
-	curl -L $(CORE_URL)/$(CORE_NAME)-windows-amd64.tar.gz | tar xz -C $(DESKTOP_OUT)$(SEP)
-	ls $(DESKTOP_OUT) || dir $(DESKTOP_OUT)$(SEP)
+	mkdir -p $(DESKTOP_OUT) || echo Folder already exists. Skipping...
+	curl -L $(CORE_URL)/$(CORE_NAME)-windows-amd64.tar.gz | tar xz -C $(DESKTOP_OUT)/
+	ls $(DESKTOP_OUT) || dir $(DESKTOP_OUT)
 	
 
 linux-libs:
