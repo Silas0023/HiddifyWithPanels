@@ -144,22 +144,26 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "=== Preparing Windows (downloading libcore) ==="
-          # Use PowerShell to run make command
-          $makeExe = (where.exe make)[0]
-          if ($makeExe) {
-            & $makeExe windows-prepare
-          } else {
-            Write-Host "Make not found, trying alternative approach..."
-            # Run the commands that make windows-prepare would run
-            flutter pub get
-            dart run build_runner build --delete-conflicting-outputs
-            dart run slang
-            # Download libcore manually if needed
-            $libcoreScript = "scripts/download_libcore.dart"
-            if (Test-Path $libcoreScript) {
-              dart run $libcoreScript windows
-            }
-          }
+          
+          # Read core version from dependencies.properties
+          $coreVersion = (Get-Content dependencies.properties | Where-Object { $_ -match "^core.version=" }) -replace "core.version=", ""
+          Write-Host "Core version: $coreVersion"
+          
+          # Setup directories
+          New-Item -ItemType Directory -Force -Path "libcore\bin"
+          
+          # Download libcore
+          $coreUrl = "https://github.com/hiddify/hiddify-next-core/releases/download/v${coreVersion}/hiddify-core-windows-amd64.tar.gz"
+          Write-Host "Downloading from: $coreUrl"
+          
+          # Download and extract
+          Invoke-WebRequest -Uri $coreUrl -OutFile "libcore.tar.gz"
+          tar xzf libcore.tar.gz -C "libcore\bin"
+          Remove-Item "libcore.tar.gz"
+          
+          # List downloaded files
+          Write-Host "Downloaded files:"
+          Get-ChildItem -Path "libcore\bin"
       
       - name: Build Windows Verbose
         shell: pwsh
