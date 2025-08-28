@@ -141,11 +141,13 @@ jobs:
           dart run slang
 
       - name: Prepare for Windows
+        shell: bash
         run: |
           make windows-prepare
           tree
 
       - name: Build Windows
+        shell: bash
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
