@@ -134,63 +134,73 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Dependencies
+      - name: Prepare Windows Build
+        shell: pwsh
         run: |
+          Write-Host "=== Preparing Windows Build ==="
+          
+          # Get dependencies
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
-        
-      - name: Prepare for Windows (Download libcore)
-        shell: bash
-        run: |
+          
           # Read core version
-          CORE_VERSION=$(grep "core.version" dependencies.properties | cut -d'=' -f2)
-          echo "Core version: $CORE_VERSION"
+          $coreVersion = (Get-Content dependencies.properties | Where-Object { $_ -match "^core.version=" }) -replace "core.version=", ""
+          Write-Host "Core version: $coreVersion"
           
           # Setup directories
-          DESKTOP_OUT="libcore/bin"
-          mkdir -p $DESKTOP_OUT
+          New-Item -ItemType Directory -Force -Path "libcore\bin"
           
-          # Download and extract libcore
-          CORE_URL="https://github.com/hiddify/hiddify-next-core/releases/download/v${CORE_VERSION}"
-          CORE_NAME="hiddify-core"
-          echo "Downloading from: $CORE_URL/${CORE_NAME}-windows-amd64.tar.gz"
-          curl -L "$CORE_URL/${CORE_NAME}-windows-amd64.tar.gz" | tar xz -C "$DESKTOP_OUT/"
+          # Download libcore
+          $coreUrl = "https://github.com/hiddify/hiddify-next-core/releases/download/v${coreVersion}/hiddify-core-windows-amd64.tar.gz"
+          Write-Host "Downloading from: $coreUrl"
           
-          # List files to verify
-          ls -la $DESKTOP_OUT/
+          # Download and extract
+          Invoke-WebRequest -Uri $coreUrl -OutFile "libcore.tar.gz"
+          tar xzf libcore.tar.gz -C "libcore\bin"
+          Remove-Item "libcore.tar.gz"
+          
+          # List files
+          Get-ChildItem -Path "libcore\bin"
 
-      - name: Build Windows
+      - name: Build Windows Application
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        shell: bash
+        shell: pwsh
         run: |
-          # Install flutter_distributor
+          Write-Host "=== Building Windows Application ==="
+          
+          # Activate flutter_distributor
           dart pub global activate flutter_distributor
           
-          # Build with flutter_distributor
-          export PATH="$PATH:$HOME/.pub-cache/bin"
-          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe,msix --skip-clean --build-dart-define sentry_dsn=$SENTRY_DSN
-  
-      - name: Copy to out Windows
-        shell: bash
-        run: |
-          # Create directories
-          mkdir -p dist/tmp out
+          # Add to PATH
+          $env:PATH = "$env:PATH;$env:USERPROFILE\.pub-cache\bin"
           
-          # Copy setup files
-          find dist -name "*windows-setup.exe" -type f -exec cp {} out/Hiddify-Windows-Setup-x64.exe \; 2>/dev/null || true
-          find dist -name "*windows.msix" -type f -exec cp {} out/Hiddify-Windows-Setup-x64.msix \; 2>/dev/null || true
+          # Build with flutter_distributor
+          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe,msix --skip-clean --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+  
+      - name: Package Windows Output
+        shell: pwsh
+        run: |
+          Write-Host "=== Packaging Windows Output ==="
+          
+          # Create output directories
+          New-Item -ItemType Directory -Force -Path "out"
+          New-Item -ItemType Directory -Force -Path "dist\tmp"
+          
+          # Copy installer files
+          Get-ChildItem -Recurse -Path "dist" -Filter "*windows-setup.exe" | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.exe" -ErrorAction SilentlyContinue
+          Get-ChildItem -Recurse -Path "dist" -Filter "*windows.msix" | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.msix" -ErrorAction SilentlyContinue
           
           # Create portable package
-          cp -r build/windows/x64/runner/Release dist/tmp/hiddify-next
-          cp .github/help/mac-windows/*.url dist/tmp/hiddify-next/ 2>/dev/null || true
+          Copy-Item -Path "build\windows\x64\runner\Release" -Destination "dist\tmp\hiddify-next" -Recurse
+          Copy-Item -Path ".github\help\mac-windows\*.url" -Destination "dist\tmp\hiddify-next\" -ErrorAction SilentlyContinue
           
-          # Zip portable version (using PowerShell for zip as it's available on Windows)
-          powershell -Command "Compress-Archive -Force -Path dist/tmp/hiddify-next -DestinationPath out/Hiddify-Windows-Portable-x64.zip"
+          # Create ZIP
+          Compress-Archive -Force -Path "dist\tmp\hiddify-next" -DestinationPath "out\Hiddify-Windows-Portable-x64.zip"
           
-          # List output files
-          ls -la out/
+          # List output
+          Get-ChildItem -Path "out"
           
       - name: Upload Windows Artifact
         if: env.UPLOAD_ARTIFACT == 'true'
