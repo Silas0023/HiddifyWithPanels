@@ -134,23 +134,26 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: make curl tar gzip tree
+          
       - name: Install Dependencies
         run: |
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
           dart run slang
-
-      - name: Install make with Chocolatey
-        run: choco install make -y
         
       - name: Prepare for Windows
-        shell: cmd
+        shell: msys2 {0}
         run: |
           make windows-prepare
           tree
 
       - name: Build Windows
-        shell: cmd
+        shell: msys2 {0}
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
