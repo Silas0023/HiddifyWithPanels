@@ -6,14 +6,13 @@ class AuthService {
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     return await _httpService.postRequest(
-      "/api/v1/passport/auth/login",
+      "/api/mobile/auth/email/login",
       {"email": email, "password": password},
       requiresHeaders: false,
     );
   }
 
-  Future<Map<String, dynamic>> register(String email, String password,
-      String inviteCode, String emailCode) async {
+  Future<Map<String, dynamic>> register(String email, String password, String inviteCode, String emailCode) async {
     return await _httpService.postRequest(
       "/api/v1/passport/auth/register",
       {
@@ -32,8 +31,7 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> resetPassword(
-      String email, String password, String emailCode) async {
+  Future<Map<String, dynamic>> resetPassword(String email, String password, String emailCode) async {
     return await _httpService.postRequest(
       "/api/v1/passport/auth/forget",
       {

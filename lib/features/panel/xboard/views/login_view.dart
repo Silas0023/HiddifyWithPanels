@@ -23,6 +23,8 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     final loginViewModel = ref.watch(loginViewModelProvider);
@@ -50,6 +52,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       : constraints.maxWidth * 0.9,
                 ),
                 child: Form(
+                  key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,6 +99,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                           prefixIcon: const Icon(Icons.person),
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return t.login.usernameRequired;
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -108,6 +117,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           prefixIcon: const Icon(Icons.lock),
                         ),
                         obscureText: true,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return t.login.passwordRequired;
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 10),
                       Row(
@@ -128,10 +143,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ElevatedButton(
                           onPressed: domainCheckViewModel.isSuccess
                               ? () async {
+                                  // 验证表单
+                                  if (!_formKey.currentState!.validate()) {
+                                    return;
+                                  }
+
                                   final email =
-                                      loginViewModel.usernameController.text;
+                                      loginViewModel.usernameController.text.trim();
                                   final password =
-                                      loginViewModel.passwordController.text;
+                                      loginViewModel.passwordController.text.trim();
+
                                   try {
                                     await loginViewModel.login(
                                       email,

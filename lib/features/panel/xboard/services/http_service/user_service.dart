@@ -20,7 +20,7 @@ class UserService {
   Future<bool> validateToken(String token) async {
     try {
       final response = await _httpService.getRequest(
-        "/api/v1/user/getSubscribe",
+        "/api/mobile/users/profile",
         headers: {'Authorization': token},
       );
       return response['status'] == 'success';
@@ -31,7 +31,7 @@ class UserService {
 
   Future<String?> getSubscriptionLink(String accessToken) async {
     final result = await _httpService.getRequest(
-      "/api/v1/user/getSubscribe",
+      "/api/mobile/users/profile",
       headers: {'Authorization': accessToken},
     );
     // ignore: avoid_dynamic_calls

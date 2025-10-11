@@ -6,7 +6,7 @@ import 'package:hiddify/features/panel/xboard/services/http_service/domain_servi
 import 'package:http/http.dart' as http;
 
 class HttpService {
-  static String baseUrl = 'https://aa18.de'; // 替换为你的实际基础 URL
+  static String baseUrl = 'https://kuranode.com'; // 替换为你的实际基础 URL
   // 初始化服务并设置动态域名
   static Future<void> initialize() async {
     baseUrl = await DomainService.fetchValidDomain();
@@ -19,6 +19,14 @@ class HttpService {
   }) async {
     final url = Uri.parse('$baseUrl$endpoint');
 
+    if (kDebugMode) {
+      print('========== GET Request Details ==========');
+      print('URL: $url');
+      print('Endpoint: $endpoint');
+      print('Headers: $headers');
+      print('==========================================');
+    }
+
     try {
       final response = await http
           .get(
@@ -28,7 +36,11 @@ class HttpService {
           .timeout(const Duration(seconds: 20)); // 设置超时时间
 
       if (kDebugMode) {
-        print("GET $baseUrl$endpoint response: ${response.body}");
+        print('========== GET Response Details ==========');
+        print('URL: $url');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        print('==========================================');
       }
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
@@ -54,17 +66,39 @@ class HttpService {
   }) async {
     final url = Uri.parse('$baseUrl$endpoint');
 
+    // 始终需要 Content-Type 来发送 JSON，除非明确提供了自定义 headers
+    final finalHeaders = requiresHeaders
+        ? (headers ?? {'Content-Type': 'application/json'})
+        : {'Content-Type': 'application/json'};
+
+    if (kDebugMode) {
+      print('========== POST Request Details ==========');
+      print('URL: $url');
+      print('Endpoint: $endpoint');
+      print('RequiresHeaders: $requiresHeaders');
+      print('Actual Headers: $finalHeaders');
+      print('Body (raw): $body');
+      print('Body (JSON): ${json.encode(body)}');
+      print('==========================================');
+    }
+
     try {
+
       final response = await http
           .post(
             url,
-            headers: requiresHeaders ? (headers ?? {'Content-Type': 'application/json'}) : null,
+            headers: finalHeaders,
             body: json.encode(body),
           )
           .timeout(const Duration(seconds: 20)); // 设置超时时间
 
       if (kDebugMode) {
-        print("POST $baseUrl$endpoint response: ${response.body}");
+        print('========== POST Response Details ==========');
+        print('URL: $url');
+        print('Status Code: ${response.statusCode}');
+        print('Response Headers: ${response.headers}');
+        print('Response Body: ${response.body}');
+        print('===========================================');
       }
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
@@ -86,6 +120,16 @@ class HttpService {
   ) async {
     final url = Uri.parse('$baseUrl$endpoint');
 
+    if (kDebugMode) {
+      print('========== POST Request (No Headers) Details ==========');
+      print('URL: $url');
+      print('Endpoint: $endpoint');
+      print('Headers: null');
+      print('Body (raw): $body');
+      print('Body (JSON): ${json.encode(body)}');
+      print('========================================================');
+    }
+
     try {
       final response = await http
           .post(
@@ -95,7 +139,11 @@ class HttpService {
           .timeout(const Duration(seconds: 20)); // 设置超时时间
 
       if (kDebugMode) {
-        print("POST $baseUrl$endpoint without headers response: ${response.body}");
+        print('========== POST Response (No Headers) Details ==========');
+        print('URL: $url');
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+        print('========================================================');
       }
       if (response.statusCode == 200) {
         return json.decode(response.body) as Map<String, dynamic>;
@@ -104,7 +152,9 @@ class HttpService {
       }
     } catch (e) {
       if (kDebugMode) {
+        print('========== POST Request (No Headers) Error ==========');
         print('Error during POST request without headers to $baseUrl$endpoint: $e');
+        print('=====================================================');
       }
       rethrow;
     }

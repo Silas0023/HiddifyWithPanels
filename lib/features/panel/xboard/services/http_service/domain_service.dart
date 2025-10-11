@@ -5,7 +5,7 @@ class DomainService {
   // 从返回的 JSON 中挑选一个可以正常访问的域名
   static Future<String> fetchValidDomain() async {
     // 直接返回指定的域名
-    const String fixedDomain = 'https://aa18.de';
+    const String fixedDomain = 'https://kuranode.com';
     if (kDebugMode) {
       print('Using fixed domain: $fixedDomain');
     }

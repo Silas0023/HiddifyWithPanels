@@ -81,8 +81,11 @@ class LoginViewModel extends ChangeNotifier {
 
       findAuthData(result);
 
-      if (authData != null && token != null) {
-        await storeToken(authData!);
+      // 如果找到了 token，使用 token 作为认证数据
+      // 如果同时有 auth_data 和 token，优先使用 auth_data
+      if (authData != null || token != null) {
+        final authToken = authData ?? token!;
+        await storeToken(authToken);
         await _saveCredentials();
 
         // 使用封装好的 Subscription 来更新订阅

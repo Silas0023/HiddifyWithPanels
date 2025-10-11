@@ -170,7 +170,9 @@
         "forgotPassword": "Forgot Password",
         "register": "Register",
         "rememberMe": "Remember Me",
-        "loginErr": "Login failed"
+        "loginErr": "Login failed",
+        "usernameRequired": "Please enter your username/email",
+        "passwordRequired": "Please enter your password"
     },
     "forgetPassword": {
         "pageTitle": "Forget Password",

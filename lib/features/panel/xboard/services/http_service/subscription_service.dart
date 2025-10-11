@@ -7,7 +7,7 @@ class SubscriptionService {
   // 获取订阅链接的方法
   Future<String?> getSubscriptionLink(String accessToken) async {
     final result = await _httpService.getRequest(
-      "/api/v1/user/getSubscribe",
+      "/api/mobile/users/profile",
       headers: {
         'Authorization': accessToken,
       },

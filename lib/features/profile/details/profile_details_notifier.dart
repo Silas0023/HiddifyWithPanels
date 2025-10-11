@@ -154,7 +154,7 @@ class ProfileDetailsNotifier extends _$ProfileDetailsNotifier with AppLogger {
               }
             }
           } else {
-            loggy.debug('adding profile, url: [${profile.url}]');
+            loggy.debug('adding profile, url:(profile_details_notifier) [${profile.url}]');
             failureOrSuccess = await _profilesRepo.add(profile).run();
           }
 
