@@ -43,8 +43,6 @@ dependencies:
   url_launcher: ^6.2.5
   vclibs: ^0.1.2
   launch_at_startup: ^0.2.2
-  sentry_flutter: ^7.20.2
-  sentry_dart_plugin: ^1.7.1
   combine: ^0.5.7
   path: ^1.8.3
   loggy: ^2.0.3
@@ -163,9 +161,3 @@ ffigen:
     entry-points:
       - "libcore/bin/libcore.h"
 
-sentry:
-  upload_debug_symbols: true
-  upload_source_maps: true
-  upload_sources: true
-  log_level: info
-  ignore_missing: true

@@ -6,7 +6,6 @@ import 'package:hiddify/core/router/routes.dart';
 import 'package:hiddify/features/panel/xboard/services/auth_provider.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 
 part 'app_router.g.dart';
 
@@ -72,9 +71,6 @@ GoRouter router(RouterRef ref) {
 
       return null;
     },
-    observers: [
-      SentryNavigatorObserver(),
-    ],
   );
 }
 
