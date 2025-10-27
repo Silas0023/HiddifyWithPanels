@@ -24,24 +24,60 @@ class StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final effectiveTitleStyle =
-        titleStyle ?? Theme.of(context).textTheme.bodySmall;
+        titleStyle ?? Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        );
     final effectiveLabelStyle = labelStyle ??
         Theme.of(context)
             .textTheme
             .bodySmall
-            ?.copyWith(fontWeight: FontWeight.w300);
+            ?.copyWith(
+              fontWeight: FontWeight.w400,
+              color: isDark ? Colors.white.withOpacity(0.7) : Colors.black54,
+            );
     final effectiveDataStyle = dataStyle ??
         Theme.of(context)
             .textTheme
             .bodySmall
-            ?.copyWith(fontWeight: FontWeight.w300);
+            ?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white.withOpacity(0.95) : Colors.black87,
+            );
 
-    return Card(
-      margin: EdgeInsets.zero,
-      shadowColor: Colors.transparent,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? const Color(0xFF1E2936).withOpacity(0.6)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF2D3E50).withOpacity(0.4)
+              : Colors.black.withOpacity(0.08),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: isDark ? 8 : 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: padding,
+        padding: padding.copyWith(
+          left: padding.left + 4,
+          right: padding.right + 4,
+          top: padding.top + 4,
+          bottom: padding.bottom + 4,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -50,13 +86,16 @@ class StatsCard extends StatelessWidget {
                 title!,
                 style: effectiveTitleStyle,
               ),
-              const Gap(4),
+              const Gap(6),
             ],
             ...stats
                 .map(
                   (stat) {
                     Widget label = IconTheme.merge(
-                      data: const IconThemeData(size: 14),
+                      data: IconThemeData(
+                        size: 15,
+                        color: isDark ? Colors.white.withOpacity(0.7) : Colors.black54,
+                      ),
                       child: DefaultTextStyle(
                         style: effectiveLabelStyle!,
                         overflow: TextOverflow.ellipsis,
@@ -74,7 +113,7 @@ class StatsCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         label,
-                        const Gap(2),
+                        const Gap(4),
                         DefaultTextStyle(
                           style: effectiveDataStyle!,
                           overflow: TextOverflow.ellipsis,
@@ -85,7 +124,7 @@ class StatsCard extends StatelessWidget {
                   },
                 )
                 .toList()
-                .spaceBy(height: 2),
+                .spaceBy(height: 4),
           ],
         ),
       ),

@@ -24,8 +24,10 @@ class HomePage extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final hasAnyProfile = ref.watch(hasAnyProfileProvider);
     final activeProfile = ref.watch(activeProfileProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0D1B2A) : const Color(0xFFF8FAFC),
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -35,7 +37,14 @@ class HomePage extends HookConsumerWidget {
                 title: Text.rich(
                   TextSpan(
                     children: [
-                      TextSpan(text: t.general.appTitle),
+                      TextSpan(
+                        text: t.general.appTitle,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 20,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
                       const TextSpan(text: " "),
                       const WidgetSpan(
                         child: AppVersionLabel(),
@@ -130,23 +139,46 @@ class AppVersionLabel extends HookConsumerWidget {
     final version = ref.watch(appInfoProvider).requireValue.presentVersion;
     if (version.isBlank) return const SizedBox();
 
+    final isDark = theme.brightness == Brightness.dark;
+
     return Semantics(
       label: t.about.version,
       button: false,
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.secondaryContainer,
-          borderRadius: BorderRadius.circular(4),
+          gradient: LinearGradient(
+            colors: isDark
+                ? [
+                    const Color(0xFF00B4D8),
+                    const Color(0xFF0096C7),
+                  ]
+                : [
+                    const Color(0xFF00A8E8),
+                    const Color(0xFF0088C8),
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF00A8E8).withOpacity(isDark ? 0.25 : 0.2),
+              blurRadius: 8,
+              spreadRadius: 0,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(
-          horizontal: 4,
-          vertical: 1,
+          horizontal: 10,
+          vertical: 4,
         ),
         child: Text(
           version,
           textDirection: TextDirection.ltr,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSecondaryContainer,
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 10.5,
+            letterSpacing: 0.3,
           ),
         ),
       ),

@@ -23,6 +23,7 @@ class SideBarStatsOverview extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final stats =
         ref.watch(statsNotifierProvider).asData?.value ?? StatsEntity.empty();
@@ -41,6 +42,8 @@ class SideBarStatsOverview extends HookConsumerWidget {
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   textStyle: Theme.of(context).textTheme.labelSmall,
+                  foregroundColor: const Color(0xFF00A8E8),
+                  iconColor: const Color(0xFF00A8E8),
                 ),
                 onPressed: () {
                   ref
@@ -62,7 +65,7 @@ class SideBarStatsOverview extends HookConsumerWidget {
             ),
           ),
           const ConnectionStatsCard(),
-          const Gap(8),
+          const Gap(12),
           AnimatedCrossFade(
             crossFadeState:
                 showAll ? CrossFadeState.showSecond : CrossFadeState.showFirst,
@@ -90,43 +93,39 @@ class SideBarStatsOverview extends HookConsumerWidget {
                   title: t.stats.trafficLive,
                   stats: [
                     (
-                      label: const Text(
-                        "↑",
-                        style: TextStyle(color: Colors.green),
+                      label: Icon(
+                        FluentIcons.arrow_upload_16_filled,
+                        color: isDark ? Colors.greenAccent : Colors.green,
                       ),
                       data: Text(stats.uplink.speed()),
                       semanticLabel: t.stats.uplink,
                     ),
                     (
-                      label: Text(
-                        "↓",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
+                      label: Icon(
+                        FluentIcons.arrow_download_16_filled,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                       data: Text(stats.downlink.speed()),
                       semanticLabel: t.stats.downlink,
                     ),
                   ],
                 ),
-                const Gap(8),
+                const Gap(12),
                 StatsCard(
                   title: t.stats.trafficTotal,
                   stats: [
                     (
-                      label: const Text(
-                        "↑",
-                        style: TextStyle(color: Colors.green),
+                      label: Icon(
+                        FluentIcons.arrow_upload_16_filled,
+                        color: isDark ? Colors.greenAccent : Colors.green,
                       ),
                       data: Text(stats.uplinkTotal.size()),
                       semanticLabel: t.stats.uplink,
                     ),
                     (
-                      label: Text(
-                        "↓",
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
+                      label: Icon(
+                        FluentIcons.arrow_download_16_filled,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                       data: Text(stats.downlinkTotal.size()),
                       semanticLabel: t.stats.downlink,

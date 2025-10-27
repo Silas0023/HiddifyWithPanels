@@ -118,6 +118,8 @@ class _ConnectionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -129,49 +131,90 @@ class _ConnectionButton extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 16,
-                  color: buttonColor.withOpacity(0.5),
-                ),
-              ],
+              boxShadow: enabled
+                  ? [
+                      BoxShadow(
+                        blurRadius: 32,
+                        spreadRadius: 0,
+                        color: buttonColor.withOpacity(isDark ? 0.3 : 0.2),
+                        offset: const Offset(0, 12),
+                      ),
+                      BoxShadow(
+                        blurRadius: 16,
+                        spreadRadius: -4,
+                        color: buttonColor.withOpacity(isDark ? 0.2 : 0.15),
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : [],
             ),
-            width: 148,
-            height: 148,
+            width: 160,
+            height: 160,
             child: Material(
               key: const ValueKey("home_connection_button"),
               shape: const CircleBorder(),
-              color: Colors.white,
-              child: InkWell(
-                onTap: onTap,
-                child: Padding(
-                  padding: const EdgeInsets.all(36),
-                  child: TweenAnimationBuilder(
-                    tween: ColorTween(end: buttonColor),
-                    duration: const Duration(milliseconds: 250),
-                    builder: (context, value, child) {
-                      if (useImage) {
-                        return image.image(filterQuality: FilterQuality.medium);
-                      } else {
-                        return Assets.images.logo.svg(
-                          colorFilter: ColorFilter.mode(
-                            value!,
-                            BlendMode.srcIn,
-                          ),
-                        );
-                      }
-                    },
+              elevation: enabled ? 4 : 0,
+              color: isDark ? const Color(0xFF1E2936) : Colors.white,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: enabled
+                        ? buttonColor.withOpacity(isDark ? 0.4 : 0.3)
+                        : (isDark ? Colors.white10 : Colors.black12),
+                    width: 3,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: enabled ? onTap : null,
+                  splashColor: buttonColor.withOpacity(0.2),
+                  highlightColor: buttonColor.withOpacity(0.1),
+                  customBorder: const CircleBorder(),
+                  child: Center(
+                    child: TweenAnimationBuilder(
+                      tween: ColorTween(end: buttonColor),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      builder: (context, value, child) {
+                        if (useImage) {
+                          return Padding(
+                            padding: const EdgeInsets.all(36),
+                            child: image.image(
+                              filterQuality: FilterQuality.medium,
+                              opacity: enabled ? const AlwaysStoppedAnimation(1.0) : const AlwaysStoppedAnimation(0.5),
+                            ),
+                          );
+                        } else {
+                          return Container(
+                            padding: const EdgeInsets.all(32),
+                            child: Assets.images.logo.svg(
+                              colorFilter: ColorFilter.mode(
+                                enabled ? value! : value!.withOpacity(0.5),
+                                BlendMode.srcIn,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
               ),
-            ).animate(target: enabled ? 0 : 1).blurXY(end: 1),
-          ).animate(target: enabled ? 0 : 1).scaleXY(end: .88, curve: Curves.easeIn),
+            ).animate(target: enabled ? 0 : 1).scaleXY(end: .95, curve: Curves.easeOut),
+          ),
         ),
-        const Gap(16),
+        const Gap(24),
         ExcludeSemantics(
           child: AnimatedText(
             label,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              letterSpacing: 0.2,
+              color: enabled
+                  ? (isDark ? Colors.white : const Color(0xFF1a1a1a))
+                  : (isDark ? Colors.white38 : Colors.black38),
+            ),
           ),
         ),
       ],

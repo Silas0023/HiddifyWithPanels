@@ -51,19 +51,37 @@ class ProfileTile extends HookConsumerWidget {
     };
 
     final effectiveMargin = isMain ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
-    final double effectiveElevation = profile.active ? 12 : 4;
-    final effectiveOutlineColor = profile.active ? theme.colorScheme.outlineVariant : Colors.transparent;
+    final effectiveOutlineColor = profile.active ? const Color(0xFF00C9FF) : const Color(0xFF2D3E50).withOpacity(0.3);
 
-    return Card(
+    return Container(
       margin: effectiveMargin,
-      elevation: effectiveElevation,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: effectiveOutlineColor),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2837).withOpacity(0.6),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: effectiveOutlineColor,
+          width: profile.active ? 1.5 : 1,
+        ),
+        boxShadow: profile.active
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF00C9FF).withOpacity(0.2),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [],
       ),
-      shadowColor: Colors.transparent,
-      child: IntrinsicHeight(
-        child: Row(
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 0,
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        shadowColor: Colors.transparent,
+        child: IntrinsicHeight(
+          child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (profile is RemoteProfileEntity || !isMain) ...[
@@ -166,6 +184,7 @@ class ProfileTile extends HookConsumerWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
