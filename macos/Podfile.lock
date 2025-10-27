@@ -1,6 +1,4 @@
 PODS:
-  - cupertino_http (0.0.1):
-    - FlutterMacOS
   - device_info_plus (0.0.1):
     - FlutterMacOS
   - dynamic_color (0.0.2):
@@ -52,7 +50,6 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
-  - cupertino_http (from `Flutter/ephemeral/.symlinks/plugins/cupertino_http/macos`)
   - device_info_plus (from `Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos`)
   - dynamic_color (from `Flutter/ephemeral/.symlinks/plugins/dynamic_color/macos`)
   - flutter_timezone (from `Flutter/ephemeral/.symlinks/plugins/flutter_timezone/macos`)
@@ -75,8 +72,6 @@ SPEC REPOS:
     - sqlite3
 
 EXTERNAL SOURCES:
-  cupertino_http:
-    :path: Flutter/ephemeral/.symlinks/plugins/cupertino_http/macos
   device_info_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos
   dynamic_color:
@@ -111,7 +106,6 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  cupertino_http: 3ee15e7bdc38bad95624c5a7a2b09015ca6fff07
   device_info_plus: b0fafc687fb901e2af612763340f1b0d4352f8e5
   dynamic_color: b820c000cc68df65e7ba7ff177cb98404ce56651
   flutter_timezone: bed4b9a391e5727a612e722d7f518882c5da205d
