@@ -60,3 +60,4 @@ app.*.map.json
 
 
 /data.fvm/
+.fvm/
