@@ -104,6 +104,66 @@ class LoginViewModel extends ChangeNotifier {
     }
   }
 
+  // 发送手机验证码
+  Future<Map<String, dynamic>> sendSmsCode(String phone) async {
+    return await _authService.sendSmsCode(phone);
+  }
+
+  // 手机号验证码登录
+  Future<void> loginWithPhone(
+    String phone,
+    String code,
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _authService.loginWithPhone(phone, code);
+
+      String? authData;
+      String? token;
+
+      // 查找 authData 和 token 的方法
+      void findAuthData(Map<String, dynamic> json) {
+        json.forEach((key, value) {
+          if (key == 'auth_data' && value is String) {
+            authData = value;
+          }
+          if (key == 'token' && value is String) {
+            token = value;
+          }
+          if (value is Map<String, dynamic>) {
+            findAuthData(value);
+          }
+        });
+      }
+
+      findAuthData(result);
+
+      // 如果找到了 token，使用 token 作为认证数据
+      // 如果同时有 auth_data 和 token，优先使用 auth_data
+      if (authData != null || token != null) {
+        final authToken = authData ?? token!;
+        await storeToken(authToken);
+
+        // 使用封装好的 Subscription 来更新订阅
+        // ignore: use_build_context_synchronously
+        await Subscription.updateSubscription(context, ref);
+        // 更新 authProvider 状态为已登录
+        ref.read(authProvider.notifier).state = true;
+      } else {
+        throw Exception("Invalid authentication data.");
+      }
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     usernameController.dispose();

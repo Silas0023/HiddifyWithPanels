@@ -6,7 +6,7 @@ import 'package:hiddify/features/panel/xboard/services/http_service/domain_servi
 import 'package:http/http.dart' as http;
 
 class HttpService {
-  static String baseUrl = 'https://kuranode.com'; // 替换为你的实际基础 URL
+  static String baseUrl = 'https://aa18.de'; // 替换为你的实际基础 URL
   // 初始化服务并设置动态域名
   static Future<void> initialize() async {
     baseUrl = await DomainService.fetchValidDomain();
@@ -67,9 +67,7 @@ class HttpService {
     final url = Uri.parse('$baseUrl$endpoint');
 
     // 始终需要 Content-Type 来发送 JSON，除非明确提供了自定义 headers
-    final finalHeaders = requiresHeaders
-        ? (headers ?? {'Content-Type': 'application/json'})
-        : {'Content-Type': 'application/json'};
+    final finalHeaders = requiresHeaders ? (headers ?? {'Content-Type': 'application/json'}) : {'Content-Type': 'application/json'};
 
     if (kDebugMode) {
       print('========== POST Request Details ==========');
@@ -83,7 +81,6 @@ class HttpService {
     }
 
     try {
-
       final response = await http
           .post(
             url,
@@ -155,6 +152,52 @@ class HttpService {
         print('========== POST Request (No Headers) Error ==========');
         print('Error during POST request without headers to $baseUrl$endpoint: $e');
         print('=====================================================');
+      }
+      rethrow;
+    }
+  }
+
+  // POST Form 表单请求方法
+  Future<Map<String, dynamic>> postFormRequest(
+    String endpoint,
+    Map<String, String> body,
+  ) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+
+    if (kDebugMode) {
+      print('========== POST Form Request Details ==========');
+      print('URL: $url');
+      print('Endpoint: $endpoint');
+      print('Headers: application/x-www-form-urlencoded');
+      print('Body (form): $body');
+      print('===============================================');
+    }
+
+    try {
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: body,
+          )
+          .timeout(const Duration(seconds: 20)); // 设置超时时间
+
+      if (kDebugMode) {
+        print('========== POST Form Response Details ==========');
+        print('URL: $url');
+        print('Status Code: ${response.statusCode}');
+        print('Response Headers: ${response.headers}');
+        print('Response Body: ${response.body}');
+        print('================================================');
+      }
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception("POST form request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during POST form request to $baseUrl$endpoint: $e');
       }
       rethrow;
     }
