@@ -8,6 +8,7 @@ import 'package:hiddify/features/home/widget/home_page.dart';
 import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hiddify/features/log/overview/logs_overview_page.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/order_page.dart';
+import 'package:hiddify/features/app_center/app_center_page.dart';
 
 import 'package:hiddify/features/panel/xboard/views/forget_password_view.dart';
 import 'package:hiddify/features/panel/xboard/views/login_view.dart';
@@ -83,6 +84,10 @@ GlobalKey<NavigatorState>? dynamicRootKey =
       path: "/proxies",
       name: ProxiesRoute.name,
     ),
+    TypedGoRoute<AppCenterRoute>(
+      path: "/app-center",
+      name: AppCenterRoute.name,
+    ),
     TypedGoRoute<PurchaseRoute>(
       path: "/purchase",
       name: PurchaseRoute.name,
@@ -134,6 +139,14 @@ class MobileWrapperRoute extends ShellRouteData {
         ),
       ],
     ),
+    TypedGoRoute<ProxiesRoute>(
+      path: "/proxies",
+      name: ProxiesRoute.name,
+    ),
+    TypedGoRoute<AppCenterRoute>(
+      path: "/app-center",
+      name: AppCenterRoute.name,
+    ),
     TypedGoRoute<PurchaseRoute>(
       path: "/purchase",
       name: PurchaseRoute.name,
@@ -145,10 +158,6 @@ class MobileWrapperRoute extends ShellRouteData {
     TypedGoRoute<UserInfoRoute>(
       path: "/user-info",
       name: UserInfoRoute.name,
-    ),
-    TypedGoRoute<ProxiesRoute>(
-      path: "/proxies",
-      name: ProxiesRoute.name,
     ),
     TypedGoRoute<ConfigOptionsRoute>(
       path: "/config-options",
@@ -271,6 +280,19 @@ class ProxiesRoute extends GoRouteData {
     return const NoTransitionPage(
       name: name,
       child: ProxiesOverviewPage(),
+    );
+  }
+}
+
+class AppCenterRoute extends GoRouteData {
+  const AppCenterRoute();
+  static const name = "AppCenter";
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage(
+      name: name,
+      child: AppCenterPage(),
     );
   }
 }

@@ -371,7 +371,13 @@
             "ignoreBatteryOptimizationsMsg": "消除限制以获得最佳 VPN 性能",
             "dynamicNotification": "在通知中显示网络速度",
             "hapticFeedback": "触觉反馈",
-            "autoIpCheck": "自动检查连接的 IP"
+            "autoIpCheck": "自动检查连接的 IP",
+            "actionAtClosing": "关闭时的操作",
+            "actionsAtClosing": {
+                "askEachTime": "每次询问",
+                "hide": "隐藏",
+                "exit": "退出"
+            }
         },
         "advanced": {
             "sectionTitle": "高级选项",
