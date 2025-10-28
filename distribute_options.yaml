@@ -2,12 +2,20 @@ output: dist/
 releases:
   - name: prod
     jobs:
-      - name: release-windows-exe
+      - name: release-windows-exe-x64
         package:
           platform: windows
           target: exe
           build_args:
             target: lib/main_prod.dart
+
+      - name: release-windows-exe-arm64
+        package:
+          platform: windows
+          target: exe
+          build_args:
+            target: lib/main_prod.dart
+            dart-define: FLUTTER_BUILD_MODE=release
 
       - name: release-windows-msix
         package:

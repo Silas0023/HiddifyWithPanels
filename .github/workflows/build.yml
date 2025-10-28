@@ -122,7 +122,7 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 1
 
-  build_windows:
+  build_windows_x64:
     permissions: write-all
     runs-on: windows-2022
     steps:
@@ -181,9 +181,9 @@ jobs:
           # Build Windows packages using distribute_options.yaml configuration
           Write-Host "`n=== Building Windows Packages ===\"
 
-          # Build EXE installer
-          Write-Host "Building EXE installer with Inno Setup..."
-          flutter_distributor release --name prod --jobs release-windows-exe
+          # Build EXE installer for x64
+          Write-Host "Building EXE installer for x64 with Inno Setup..."
+          flutter_distributor release --name prod --jobs release-windows-exe-x64
 
           if ($LASTEXITCODE -ne 0) {
             Write-Error "EXE installer build failed"
@@ -262,11 +262,140 @@ jobs:
           Write-Host "`n=== Final installers ==="
           Get-ChildItem -Path "out" | Select-Object Name, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
           
-      - name: Upload Windows Artifact
+      - name: Upload Windows x64 Artifact
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: windows
+          name: windows-x64
+          path: ./out
+          retention-days: 1
+
+  build_windows_arm64:
+    permissions: write-all
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.16.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: Prepare Windows ARM64 Build
+        shell: pwsh
+        run: |
+          Write-Host "=== Preparing Windows ARM64 Build ==="
+
+          # Get dependencies
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs
+          dart run slang
+
+          # Read core version
+          $coreVersion = (Get-Content dependencies.properties | Where-Object { $_ -match "^core.version=" }) -replace "core.version=", ""
+          Write-Host "Core version: $coreVersion"
+
+          # Setup directories
+          New-Item -ItemType Directory -Force -Path "libcore\bin"
+
+          # Download x64 libcore (works on ARM64 via emulation)
+          $coreUrl = "https://github.com/hiddify/hiddify-next-core/releases/download/v${coreVersion}/hiddify-core-windows-amd64.tar.gz"
+          Write-Host "Downloading x64 libcore from: $coreUrl"
+          Write-Host "(ARM64 Windows can run x64 binaries via emulation)"
+
+          # Download and extract
+          Invoke-WebRequest -Uri $coreUrl -OutFile "libcore.tar.gz"
+          tar xzf libcore.tar.gz -C "libcore\bin"
+          Remove-Item "libcore.tar.gz"
+
+          # List files
+          Get-ChildItem -Path "libcore\bin"
+
+      - name: Build Windows ARM64 Application
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        shell: pwsh
+        run: |
+          Write-Host "=== Building Windows ARM64 Application ==="
+
+          # Activate flutter_distributor
+          dart pub global activate flutter_distributor
+
+          # Add to PATH
+          $env:PATH = "$env:PATH;$env:USERPROFILE\.pub-cache\bin"
+
+          # Build Windows ARM64 packages using distribute_options.yaml configuration
+          Write-Host "`n=== Building Windows ARM64 Packages ===\"
+
+          # Build EXE installer for ARM64
+          Write-Host "Building EXE installer for ARM64 with Inno Setup..."
+          flutter_distributor release --name prod --jobs release-windows-exe-arm64
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "ARM64 EXE installer build failed"
+            exit 1
+          }
+
+          Write-Host "`n=== Packaging completed ==="
+
+      - name: Package Windows ARM64 Output
+        shell: pwsh
+        run: |
+          Write-Host "=== Collecting Windows ARM64 Installers ==="
+
+          # Create output directory
+          New-Item -ItemType Directory -Force -Path "out"
+
+          # List all files in dist directory for debugging
+          Write-Host "`n=== Contents of dist directory ==="
+          if (Test-Path "dist") {
+            Get-ChildItem -Recurse -Path "dist" -File | Select-Object FullName, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+          } else {
+            Write-Error "dist directory not found!"
+            exit 1
+          }
+
+          # Find and copy EXE installer
+          Write-Host "`n=== Searching for EXE installer ==="
+
+          # List all files in dist for debugging
+          Write-Host "All files in dist directory:"
+          Get-ChildItem -Recurse -Path "dist" -File | Select-Object FullName, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+
+          # flutter_distributor creates installers in dist/<version>/ directory
+          # Look for .exe files that are installers (typically >50MB with "Setup" in name or just large exe files)
+          $exeInstallers = Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" -File | Where-Object {
+            $_.Name -match "Setup" -or $_.Length -gt 50MB
+          }
+
+          if ($exeInstallers) {
+            Write-Host "`nFound EXE installer candidates:"
+            $exeInstallers | ForEach-Object {
+              Write-Host "  $($_.Name) - $([math]::Round($_.Length/1MB,2)) MB at $($_.DirectoryName)"
+            }
+
+            # Use the first (or largest) installer found
+            $exeInstaller = $exeInstallers | Sort-Object -Property Length -Descending | Select-Object -First 1
+            Write-Host "`nSelected: $($exeInstaller.Name) - $([math]::Round($exeInstaller.Length/1MB,2)) MB"
+            Copy-Item -Path $exeInstaller.FullName -Destination "out\Hiddify-Windows-ARM64-Setup.exe"
+            Write-Host "Copied to out\Hiddify-Windows-ARM64-Setup.exe"
+          } else {
+            Write-Error "No EXE installer found in dist directory"
+            exit 1
+          }
+
+          # List final output
+          Write-Host "`n=== Final installers ===\"
+          Get-ChildItem -Path "out" | Select-Object Name, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+
+      - name: Upload Windows ARM64 Artifact
+        if: env.UPLOAD_ARTIFACT == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
           path: ./out
           retention-days: 1
 
