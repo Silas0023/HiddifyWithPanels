@@ -30,6 +30,7 @@ env:
 
 jobs:
   build_linux:
+    if: false  # 暂时禁用 Linux 构建
     permissions: write-all
     runs-on: ubuntu-22.04
     steps:
@@ -79,6 +80,7 @@ jobs:
           retention-days: 1
 
   build_apk:
+    if: false  # 暂时禁用 Android 构建
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -252,6 +254,7 @@ jobs:
           retention-days: 1
 
   build_ios:
+    if: false  # 暂时禁用 iOS 构建
     permissions: write-all
     runs-on: macos-12
     steps:
