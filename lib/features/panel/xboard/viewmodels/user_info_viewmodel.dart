@@ -3,25 +3,28 @@ import 'package:flutter/foundation.dart';
 import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-// 创建 UserInfoViewModel
-class UserInfoViewModel extends ChangeNotifier {
-  final UserService _userService;
+part 'user_info_viewmodel.g.dart';
 
-  UserInfo? _userInfo;
-  UserInfo? get userInfo => _userInfo;
+// 使用 AsyncNotifierProvider 替代 ChangeNotifier + FutureProvider
+@riverpod
+class UserInfoViewModel extends _$UserInfoViewModel {
+  late final UserService _userService;
 
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  @override
+  Future<UserInfo?> build() async {
+    _userService = UserService();
+    return fetchUserInfo();
+  }
 
-  UserInfoViewModel({required UserService userService})
-      : _userService = userService;
+  Future<UserInfo?> fetchUserInfo() async {
+    // 设置为加载状态
+    state = const AsyncValue.loading();
 
-  Future<void> fetchUserInfo() async {
-    _isLoading = true;
-    notifyListeners();
-    print('开始获取用户信息...');
+    if (kDebugMode) {
+      print('开始获取用户信息...');
+    }
 
     try {
       final token = await getToken();
@@ -29,38 +32,32 @@ class UserInfoViewModel extends ChangeNotifier {
         if (kDebugMode) {
           print('Token: $token');
         }
-        _userInfo = await _userService.fetchUserInfo(token);
+        final userInfo = await _userService.fetchUserInfo(token);
         if (kDebugMode) {
-          print('用户信息已获取: $_userInfo');
+          print('用户信息已获取: $userInfo');
         }
+        // 更新状态为成功
+        state = AsyncValue.data(userInfo);
+        return userInfo;
       } else {
         if (kDebugMode) {
           print('未找到Token');
         }
+        state = const AsyncValue.data(null);
+        return null;
       }
-    } catch (e) {
-      _userInfo = null;
+    } catch (e, stackTrace) {
       if (kDebugMode) {
         print('获取用户信息失败: $e');
       }
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-      if (kDebugMode) {
-        print('用户信息加载状态: $_isLoading');
-      }
+      // 更新状态为错误
+      state = AsyncValue.error(e, stackTrace);
+      return null;
     }
   }
+
+  // 刷新用户信息
+  Future<void> refresh() async {
+    await fetchUserInfo();
+  }
 }
-
-// 注册 ViewModel 提供器
-final userInfoViewModelProvider = ChangeNotifierProvider((ref) {
-  return UserInfoViewModel(userService: UserService());
-});
-
-// 提供一个访问用户信息的 FutureProvider，确保与 ViewModel 一致
-final userInfoProvider = FutureProvider<UserInfo?>((ref) async {
-  final userInfoViewModel = ref.read(userInfoViewModelProvider);
-  await userInfoViewModel.fetchUserInfo();
-  return userInfoViewModel.userInfo;
-});

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:dartx/dartx.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
@@ -21,20 +23,60 @@ class ActiveProxyFooter extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final ipInfo = ref.watch(ipInfoNotifierProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedVisibility(
       axis: Axis.vertical,
       visible: activeProxy is AsyncData,
       child: switch (activeProxy) {
-        AsyncData(value: final proxy) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+        AsyncData(value: final proxy) => Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: isDark
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF1A2837).withOpacity(0.7),
+                        const Color(0xFF15202B).withOpacity(0.5),
+                      ],
+                    )
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withOpacity(0.9),
+                        const Color(0xFFF8FAFC).withOpacity(0.8),
+                      ],
+                    ),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.black.withOpacity(0.06),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       _InfoProp(
                         icon: FluentIcons.arrow_routing_20_regular,
                         text: proxy.selectedName.isNotNullOrBlank
@@ -99,11 +141,14 @@ class ActiveProxyFooter extends HookConsumerWidget {
                             ],
                           ),
                       },
+                          ],
+                        ),
+                      ),
+                      const _StatsColumn(),
                     ],
                   ),
                 ),
-                const _StatsColumn(),
-              ],
+              ),
             ),
           ),
         _ => const SizedBox(),

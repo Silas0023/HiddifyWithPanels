@@ -1173,10 +1173,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                           final code = loginViewModel.passwordController.text.trim();
                           await loginViewModel.loginWithPhone(phone, code, context, ref);
                         } else {
-                          // 邮箱密码登录
+                          // 邮箱密码登录 - 使用新的 emailLogin 接口
                           final email = loginViewModel.usernameController.text.trim();
                           final password = loginViewModel.passwordController.text.trim();
-                          await loginViewModel.login(email, password, context, ref);
+                          await loginViewModel.loginWithEmail(email, password, context, ref);
                         }
 
                         if (context.mounted) {

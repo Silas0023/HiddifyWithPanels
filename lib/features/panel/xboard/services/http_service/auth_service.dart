@@ -50,6 +50,17 @@ class AuthService {
     );
   }
 
+  // 邮箱密码登录
+  Future<Map<String, dynamic>> loginWithEmail(String email, String password) async {
+    return await _httpService.postFormRequest(
+      "/apiv2/clickPass/emailLogin",
+      {
+        "email": email,
+        "password": password,
+      },
+    );
+  }
+
   Future<Map<String, dynamic>> resetPassword(String email, String password, String emailCode) async {
     return await _httpService.postRequest(
       "/api/v1/passport/auth/forget",

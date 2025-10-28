@@ -52,25 +52,55 @@ class ProfileTile extends HookConsumerWidget {
 
     final effectiveMargin = isMain ? const EdgeInsets.symmetric(horizontal: 16, vertical: 8) : const EdgeInsets.only(left: 12, right: 12, bottom: 12);
     final effectiveOutlineColor = profile.active ? const Color(0xFF00C9FF) : const Color(0xFF2D3E50).withOpacity(0.3);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: effectiveMargin,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2837).withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
+        gradient: isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1A2837).withOpacity(0.8),
+                  const Color(0xFF15202B).withOpacity(0.6),
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.95),
+                  const Color(0xFFF8FAFC).withOpacity(0.9),
+                ],
+              ),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: effectiveOutlineColor,
-          width: profile.active ? 1.5 : 1,
+          width: profile.active ? 2 : 1,
         ),
         boxShadow: profile.active
             ? [
                 BoxShadow(
-                  color: const Color(0xFF00C9FF).withOpacity(0.2),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF00C9FF).withOpacity(0.25),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 6),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF00C9FF).withOpacity(0.1),
+                  blurRadius: 40,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 10),
                 ),
               ]
-            : [],
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Card(
         margin: EdgeInsets.zero,
@@ -410,7 +440,6 @@ class ProfileSubscriptionInfo extends HookConsumerWidget {
   }
 }
 
-// TODO change colors
 class RemainingTrafficIndicator extends StatelessWidget {
   const RemainingTrafficIndicator(this.ratio, {super.key});
 
@@ -418,25 +447,44 @@ class RemainingTrafficIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final startColor = ratio < 0.25
-        ? const Color.fromRGBO(93, 205, 251, 1.0)
-        : ratio < 0.65
-            ? const Color.fromRGBO(205, 199, 64, 1.0)
-            : const Color.fromRGBO(241, 82, 81, 1.0);
-    final endColor = ratio < 0.25
-        ? const Color.fromRGBO(49, 146, 248, 1.0)
-        : ratio < 0.65
-            ? const Color.fromRGBO(98, 115, 32, 1.0)
-            : const Color.fromRGBO(139, 30, 36, 1.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LinearPercentIndicator(
-      percent: ratio,
-      animation: true,
-      padding: EdgeInsets.zero,
-      lineHeight: 6,
-      barRadius: const Radius.circular(16),
-      linearGradient: LinearGradient(
-        colors: [startColor, endColor],
+    final startColor = ratio < 0.25
+        ? const Color(0xFF00E5FF)
+        : ratio < 0.65
+            ? const Color(0xFFFFD54F)
+            : const Color(0xFFFF5252);
+    final endColor = ratio < 0.25
+        ? const Color(0xFF00B8D4)
+        : ratio < 0.65
+            ? const Color(0xFFFFA726)
+            : const Color(0xFFD32F2F);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: startColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: LinearPercentIndicator(
+        percent: ratio.clamp(0.0, 1.0),
+        animation: true,
+        animationDuration: 800,
+        curve: Curves.easeInOutCubic,
+        padding: EdgeInsets.zero,
+        lineHeight: 8,
+        barRadius: const Radius.circular(16),
+        backgroundColor: isDark
+            ? Colors.white.withOpacity(0.1)
+            : Colors.black.withOpacity(0.08),
+        linearGradient: LinearGradient(
+          colors: [startColor, endColor],
+        ),
       ),
     );
   }

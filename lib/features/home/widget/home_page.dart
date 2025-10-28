@@ -66,7 +66,9 @@ class HomePage extends HookConsumerWidget {
                 // 如果有活跃的配置文件，显示相应的内容
                 AsyncData(value: final profile?) => MultiSliver(
                     children: [
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       ProfileTile(profile: profile, isMain: true),
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
                       SliverFillRemaining(
                         hasScrollBody: false,
                         child: Column(
@@ -78,6 +80,7 @@ class HomePage extends HookConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   ConnectionButton(),
+                                  SizedBox(height: 16),
                                   ActiveProxyDelayIndicator(),
                                 ],
                               ),

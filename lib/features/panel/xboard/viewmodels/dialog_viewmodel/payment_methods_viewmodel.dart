@@ -13,12 +13,20 @@ class PaymentMethodsViewModel extends ChangeNotifier {
   final double totalAmount;
   final VoidCallback onPaymentSuccess;
   final PurchaseService _purchaseService = PurchaseService();
+  MonitorPayStatus? _monitorPayStatus;
 
   PaymentMethodsViewModel({
     required this.tradeNo,
     required this.totalAmount,
     required this.onPaymentSuccess,
   });
+
+  @override
+  void dispose() {
+    // 取消订单状态监控
+    _monitorPayStatus?.cancelMonitoring();
+    super.dispose();
+  }
 
   Future<void> handlePayment(dynamic selectedMethod) async {
     final accessToken = await getToken(); // 获取用户的token
@@ -79,7 +87,9 @@ class PaymentMethodsViewModel extends ChangeNotifier {
     final accessToken = await getToken();
     if (accessToken == null) return;
 
-    MonitorPayStatus().monitorOrderStatus(tradeNo, accessToken, (bool isPaid) {
+    // 创建并保存 MonitorPayStatus 实例
+    _monitorPayStatus = MonitorPayStatus();
+    _monitorPayStatus!.monitorOrderStatus(tradeNo, accessToken, (bool isPaid) {
       if (isPaid) {
         if (kDebugMode) {
           print('订单支付成功');

@@ -604,5 +604,11 @@
         "hide": "隐藏",
         "close": "关闭",
         "alertMessage": "隐藏或退出应用程序？"
+    },
+    "appCenter": {
+        "pageTitle": "应用中心",
+        "loading": "加载中...",
+        "loadingError": "加载失败",
+        "cannotOpenLink": "无法打开链接: "
     }
 }

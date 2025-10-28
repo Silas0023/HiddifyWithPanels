@@ -160,15 +160,22 @@ class HttpService {
   // POST Form 表单请求方法
   Future<Map<String, dynamic>> postFormRequest(
     String endpoint,
-    Map<String, String> body,
-  ) async {
+    Map<String, String> body, {
+    Map<String, String>? headers,
+  }) async {
     final url = Uri.parse('$baseUrl$endpoint');
+
+    // 合并默认的 Content-Type 和自定义 headers
+    final finalHeaders = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      ...?headers,
+    };
 
     if (kDebugMode) {
       print('========== POST Form Request Details ==========');
       print('URL: $url');
       print('Endpoint: $endpoint');
-      print('Headers: application/x-www-form-urlencoded');
+      print('Headers: $finalHeaders');
       print('Body (form): $body');
       print('===============================================');
     }
@@ -177,7 +184,7 @@ class HttpService {
       final response = await http
           .post(
             url,
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            headers: finalHeaders,
             body: body,
           )
           .timeout(const Duration(seconds: 20)); // 设置超时时间

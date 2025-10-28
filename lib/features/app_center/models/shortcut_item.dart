@@ -7,14 +7,18 @@ part 'shortcut_item.g.dart';
 class ShortcutItem with _$ShortcutItem {
   const factory ShortcutItem({
     required int id,
-    required String name,
-    required String description,
-    required String icon,
-    required String color,
-    required String category,
-    required int order,
-    required bool isEnabled,
-    required String link,
+    @JsonKey(name: 'appType') required String category,
+    @JsonKey(name: 'appName') required String name,
+    @JsonKey(name: 'appDesc') required String description,
+    @JsonKey(name: 'appIcon') required String icon,
+    @JsonKey(name: 'appLink') required String link,
+    @JsonKey(name: 'isUse') required String isEnabled,
+    @JsonKey(name: 'appTag') String? appTag,
+    @JsonKey(name: 'linkType') int? linkType,
+    @JsonKey(name: 'sortNum') required int order,
+    @JsonKey(name: 'isAppHome') int? isAppHome,
+    @JsonKey(name: 'appHomeType') int? appHomeType,
+    @Default('') String color,
   }) = _ShortcutItem;
 
   factory ShortcutItem.fromJson(Map<String, dynamic> json) =>
@@ -22,23 +26,26 @@ class ShortcutItem with _$ShortcutItem {
 }
 
 @freezed
-class ShortcutsResponse with _$ShortcutsResponse {
-  const factory ShortcutsResponse({
-    required String status,
+class AppCenterResponse with _$AppCenterResponse {
+  const factory AppCenterResponse({
+    required int status,
     required String message,
-    required ShortcutsData data,
-  }) = _ShortcutsResponse;
+    required List<CategoryData> data,
+    required int timestamp,
+  }) = _AppCenterResponse;
 
-  factory ShortcutsResponse.fromJson(Map<String, dynamic> json) =>
-      _$ShortcutsResponseFromJson(json);
+  factory AppCenterResponse.fromJson(Map<String, dynamic> json) =>
+      _$AppCenterResponseFromJson(json);
 }
 
 @freezed
-class ShortcutsData with _$ShortcutsData {
-  const factory ShortcutsData({
-    required List<ShortcutItem> shortcuts,
-  }) = _ShortcutsData;
+class CategoryData with _$CategoryData {
+  const factory CategoryData({
+    required String title,
+    required int sort,
+    required List<ShortcutItem> typeData,
+  }) = _CategoryData;
 
-  factory ShortcutsData.fromJson(Map<String, dynamic> json) =>
-      _$ShortcutsDataFromJson(json);
+  factory CategoryData.fromJson(Map<String, dynamic> json) =>
+      _$CategoryDataFromJson(json);
 }

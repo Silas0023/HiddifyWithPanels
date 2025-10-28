@@ -1,3 +1,4 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
@@ -33,16 +34,30 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
-        title: Text(t.userInfo.pageTitle),
+        elevation: 0,
+        backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+        title: Text(
+          t.userInfo.pageTitle,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData, // 手动刷新按钮
-            tooltip: t.general.addToClipboard,
+            icon: Icon(
+              FluentIcons.arrow_sync_24_regular,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: _refreshData,
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: FutureBuilder(
@@ -58,11 +73,16 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(),
+                  CircularProgressIndicator(
+                    color: theme.colorScheme.primary,
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     t.general.addToClipboard,
-                    style: const TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
@@ -70,27 +90,52 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
           } else if (snapshot.hasError) {
             // 显示错误信息
             return Center(
-              child: Text(
-                '${t.userInfo.fetchUserInfoError} ${snapshot.error}',
-                style: const TextStyle(fontSize: 16, color: Colors.red),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    FluentIcons.error_circle_24_regular,
+                    size: 64,
+                    color: Colors.red[300],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    t.userInfo.fetchUserInfoError,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             );
           }
 
           // 如果数据加载成功，显示整个视图
-          return const SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UserInfoCard(),
-                SizedBox(height: 16),
-                AccountBalanceCard(),
-                SizedBox(height: 16),
-                InviteCodeSection(),
-                SizedBox(height: 16),
-                ResetSubscriptionButton(),
-              ],
+          return RefreshIndicator(
+            onRefresh: () async {
+              _refreshData();
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            child: const SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UserInfoCard(),
+                  SizedBox(height: 16),
+                  AccountBalanceCard(),
+                  SizedBox(height: 16),
+                  InviteCodeSection(),
+                  SizedBox(height: 16),
+                  ResetSubscriptionButton(),
+                  SizedBox(height: 32),
+                ],
+              ),
             ),
           );
         },

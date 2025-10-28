@@ -2,43 +2,27 @@
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
-import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-final userInfoViewModelProvider = ChangeNotifierProvider((ref) {
-  return UserInfoViewModel(userService: UserService());
-});
-
-class UserInfoCard extends ConsumerStatefulWidget {
+class UserInfoCard extends ConsumerWidget {
   const UserInfoCard({super.key});
 
   @override
-  _UserInfoCardState createState() => _UserInfoCardState();
-}
-
-class _UserInfoCardState extends ConsumerState<UserInfoCard> {
-  @override
-  void initState() {
-    super.initState();
-    // 使用 Future 来确保不会在 widget 构建过程中修改状态
-    Future(() {
-      ref.read(userInfoViewModelProvider).fetchUserInfo();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = ref.watch(userInfoViewModelProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userInfoAsync = ref.watch(userInfoViewModelProvider);
     final t = ref.watch(translationsProvider);
 
-    if (viewModel.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    } else if (viewModel.userInfo != null) {
-      return _buildUserInfoCard(viewModel.userInfo!, t);
-    } else {
-      return const SizedBox(); // 如果没有数据，则返回空占位
-    }
+    return userInfoAsync.when(
+      data: (userInfo) {
+        if (userInfo == null) {
+          return const SizedBox(); // 如果没有数据,则返回空占位
+        }
+        return _buildUserInfoCard(userInfo, t);
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => const SizedBox(),
+    );
   }
 
   Widget _buildUserInfoCard(UserInfo userInfo, Translations t) {

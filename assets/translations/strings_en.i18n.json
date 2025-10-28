@@ -605,5 +605,11 @@
         "close": "Exit",
         "alertMessage": "Hide or Exit the application?",
         "remember": "Remember my choice"
+    },
+    "appCenter": {
+        "pageTitle": "App Center",
+        "loading": "Loading...",
+        "loadingError": "Loading Failed",
+        "cannotOpenLink": "Cannot open link: "
     }
 }

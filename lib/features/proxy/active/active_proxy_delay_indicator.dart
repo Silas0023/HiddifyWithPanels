@@ -1,16 +1,11 @@
-import 'dart:io';
-
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/widget/animated_visibility.dart';
 import 'package:hiddify/core/widget/shimmer_skeleton.dart';
-import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
-import 'package:hiddify/features/system_tray/notifier/system_tray_notifier.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:tray_manager/tray_manager.dart';
 
 class ActiveProxyDelayIndicator extends HookConsumerWidget {
   const ActiveProxyDelayIndicator({super.key});
@@ -30,19 +25,45 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget {
             final delay = proxy.urlTestDelay;
             final timeout = delay > 65000;
 
+            final isDark = theme.brightness == Brightness.dark;
+
             return Center(
-              child: InkWell(
-                onTap: () async {
-                  await ref.read(activeProxyNotifierProvider.notifier).urlTest(proxy.tag);
-                },
-                borderRadius: BorderRadius.circular(24),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(FluentIcons.wifi_1_24_regular),
-                      const Gap(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.black.withOpacity(0.04),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.08),
+                    width: 1,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: () async {
+                    await ref.read(activeProxyNotifierProvider.notifier).urlTest(proxy.tag);
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          FluentIcons.wifi_1_24_regular,
+                          color: timeout
+                              ? theme.colorScheme.error
+                              : (delay > 0
+                                  ? (delay < 300
+                                      ? Colors.green
+                                      : delay < 1000
+                                          ? Colors.orange
+                                          : Colors.red)
+                                  : null),
+                        ),
+                        const Gap(12),
                       if (delay > 0)
                         Text.rich(
                           semanticsLabel: timeout ? t.proxies.delaySemantics.timeout : t.proxies.delaySemantics.result(delay: delay),
@@ -71,7 +92,8 @@ class ActiveProxyDelayIndicator extends HookConsumerWidget {
                           label: t.proxies.delaySemantics.testing,
                           child: const ShimmerSkeleton(width: 48, height: 18),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

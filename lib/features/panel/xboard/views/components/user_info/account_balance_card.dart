@@ -16,7 +16,7 @@ class AccountBalanceCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final userInfoAsync = ref.watch(userInfoProvider);
+    final userInfoAsync = ref.watch(userInfoViewModelProvider);
 
     return userInfoAsync.when(
       data: (userInfo) {
@@ -173,7 +173,7 @@ class AccountBalanceCard extends ConsumerWidget {
           SnackBar(content: Text(t.transferDialog.transferSuccess)),
         );
         // ignore: unused_result
-        ref.refresh(userInfoProvider); // 刷新用户信息
+        ref.invalidate(userInfoViewModelProvider); // 刷新用户信息
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(t.transferDialog.transferError)),

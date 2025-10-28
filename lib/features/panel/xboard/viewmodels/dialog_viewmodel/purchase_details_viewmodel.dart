@@ -11,6 +11,7 @@ class PurchaseDetailsViewModel extends ChangeNotifier {
   String? selectedPeriod;
   double? selectedPrice;
   String? tradeNo;
+  bool isLoading = false;
 
   final PurchaseService _purchaseService = PurchaseService();
   final OrderService _orderService = OrderService();
@@ -27,51 +28,110 @@ class PurchaseDetailsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _setLoading(bool loading) {
+    isLoading = loading;
+    notifyListeners();
+  }
+
   Future<List<dynamic>> handleSubscribe() async {
-    final accessToken = await getToken();
-    if (accessToken == null) {
-      print("Access token is null");
-      return [];
-    }
+    _setLoading(true);
 
     try {
+      final accessToken = await getToken();
+      if (accessToken == null) {
+        if (kDebugMode) {
+          print("handleSubscribe: Access token is null");
+        }
+        _setLoading(false);
+        return [];
+      }
       // 检查未支付的订单
-      final List<Order> orders =
-          await _orderService.fetchUserOrders(accessToken);
+      if (kDebugMode) {
+        print('handleSubscribe: Fetching user orders...');
+      }
+
+      List<Order> orders = [];
+      try {
+        orders = await _orderService.fetchUserOrders(accessToken);
+        if (kDebugMode) {
+          print('handleSubscribe: Found ${orders.length} orders');
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('handleSubscribe: Error fetching orders: $e');
+          print('handleSubscribe: Continuing without canceling orders...');
+        }
+        // Continue even if we can't fetch orders
+      }
+
+      // Cancel unpaid orders if any were found
       for (final order in orders) {
-        print(order.status);
-        if (order.status == 0) {
-          // 如果订单未支付
-          await _orderService.cancelOrder(order.tradeNo!, accessToken);
-          print('未支付订单 ${order.tradeNo} 已取消');
+        if (kDebugMode) {
+          print('handleSubscribe: Order ${order.tradeNo} status: ${order.status}');
+        }
+        if (order.status == 0 && order.tradeNo != null) {
+          try {
+            await _orderService.cancelOrder(order.tradeNo!, accessToken);
+            if (kDebugMode) {
+              print('handleSubscribe: Cancelled unpaid order ${order.tradeNo}');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('handleSubscribe: Error canceling order ${order.tradeNo}: $e');
+              print('handleSubscribe: Continuing...');
+            }
+            // Continue even if we can't cancel an order
+          }
         }
       }
-      print("准备创建");
+
       // 创建新订单
+      if (kDebugMode) {
+        print('handleSubscribe: Creating order for plan $planId, period $selectedPeriod');
+      }
       final orderResponse = await _purchaseService.createOrder(
         planId,
         selectedPeriod!,
         accessToken,
       );
-      print("请求完毕");
-      if (orderResponse != null) {
+
+      if (kDebugMode) {
+        print('handleSubscribe: Order response: $orderResponse');
+      }
+
+      if (orderResponse != null && orderResponse['data'] != null) {
         tradeNo = orderResponse['data']?.toString();
         if (kDebugMode) {
-          print("订单创建成功 订单号$tradeNo");
+          print("handleSubscribe: Order created successfully, tradeNo: $tradeNo");
+        }
+
+        // 获取支付方式
+        if (kDebugMode) {
+          print('handleSubscribe: Fetching payment methods...');
         }
         final paymentMethods =
             await _purchaseService.getPaymentMethods(accessToken);
+
+        if (kDebugMode) {
+          print('handleSubscribe: Got ${paymentMethods.length} payment methods');
+        }
+
+        _setLoading(false);
         return paymentMethods;
       } else {
         if (kDebugMode) {
-          print('订单创建失败: ${orderResponse?['message']}');
+          print('handleSubscribe: Order creation failed');
+          print('handleSubscribe: Response: $orderResponse');
         }
+        _setLoading(false);
         return [];
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (kDebugMode) {
-        print('错误: $e');
+        print('handleSubscribe error: $e');
+        print('handleSubscribe stack trace: $stackTrace');
       }
+      _setLoading(false);
       return [];
     }
   }

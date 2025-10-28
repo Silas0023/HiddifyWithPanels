@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/app_center/models/shortcut_item.dart';
 import 'package:hiddify/features/app_center/services/app_center_service.dart';
 import 'package:hiddify/features/common/nested_app_bar.dart';
@@ -10,6 +11,7 @@ class AppCenterPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(translationsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shortcutsAsync = ref.watch(shortcutsProvider);
     final categoriesAsync = ref.watch(shortcutCategoriesProvider);
@@ -20,7 +22,7 @@ class AppCenterPage extends HookConsumerWidget {
         slivers: [
           NestedAppBar(
             title: Text(
-              '应用中心',
+              t.appCenter.pageTitle,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -41,7 +43,7 @@ class AppCenterPage extends HookConsumerWidget {
                       separatorBuilder: (context, index) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         final category = categories[index];
-                        return _buildCategoryChip(context, isDark, category.name);
+                        return _buildCategoryChip(context, isDark, category.title);
                       },
                     ),
                   ),
@@ -53,7 +55,7 @@ class AppCenterPage extends HookConsumerWidget {
           ),
           shortcutsAsync.when(
             data: (shortcuts) {
-              final enabledShortcuts = shortcuts.where((s) => s.isEnabled).toList()
+              final enabledShortcuts = shortcuts.where((s) => s.isEnabled == "1").toList()
                 ..sort((a, b) => a.order.compareTo(b.order));
 
               return SliverPadding(
@@ -68,7 +70,7 @@ class AppCenterPage extends HookConsumerWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final shortcut = enabledShortcuts[index];
-                      return _buildShortcutCard(context, isDark, shortcut);
+                      return _buildShortcutCard(context, isDark, shortcut, t);
                     },
                     childCount: enabledShortcuts.length,
                   ),
@@ -92,7 +94,7 @@ class AppCenterPage extends HookConsumerWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '加载中...',
+                      t.appCenter.loading,
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? Colors.white70 : Colors.black54,
@@ -124,7 +126,7 @@ class AppCenterPage extends HookConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      '加载失败',
+                      t.appCenter.loadingError,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -222,6 +224,7 @@ class AppCenterPage extends HookConsumerWidget {
     BuildContext context,
     bool isDark,
     ShortcutItem shortcut,
+    TranslationsEn t,
   ) {
     // 解析颜色字符串
     Color parseColor(String colorStr) {
@@ -234,6 +237,9 @@ class AppCenterPage extends HookConsumerWidget {
 
     final color = parseColor(shortcut.color);
     final lighterColor = HSLColor.fromColor(color).withLightness(0.95).toColor();
+
+    // Get translations from the ref that is available in the build method
+    // We need to capture the error message here since it's used in a callback
 
     // 根据屏幕宽度调整尺寸
     final width = MediaQuery.of(context).size.width;
@@ -292,7 +298,7 @@ class AppCenterPage extends HookConsumerWidget {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('无法打开链接: ${shortcut.link}'),
+                    content: Text('${t.appCenter.cannotOpenLink}${shortcut.link}'),
                     behavior: SnackBarBehavior.floating,
                     backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFF0F172A),
                     shape: RoundedRectangleBorder(
