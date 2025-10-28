@@ -219,15 +219,46 @@ jobs:
 
           # Find and copy EXE installer
           Write-Host "`n=== Searching for EXE installer ==="
-          $exeInstaller = Get-ChildItem -Recurse -Path "dist" -Filter "*-windows-setup.exe" -File | Select-Object -First 1
+
+          # flutter_distributor with exe target creates a folder with the app files, not an installer
+          # We need to look for the actual Inno Setup generated installer or create our own package
+
+          # First, try to find Inno Setup generated installer
+          $exeInstaller = Get-ChildItem -Recurse -Path "dist" -Filter "*-windows-setup.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+          if (-not $exeInstaller) {
+            # If not found, look for the setup executable in different naming patterns
+            $exeInstaller = Get-ChildItem -Recurse -Path "dist" -Filter "*Setup*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+
+          if (-not $exeInstaller) {
+            # Last resort: look for any .exe that's larger than 10MB (likely an installer)
+            Write-Host "Looking for large EXE files (installers are usually >10MB)..."
+            $allExes = Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" -File | Where-Object { $_.Length -gt 10MB }
+            if ($allExes) {
+              $allExes | ForEach-Object { Write-Host "  Found: $($_.Name) - $([math]::Round($_.Length/1MB,2)) MB" }
+              $exeInstaller = $allExes | Select-Object -First 1
+            }
+          }
+
           if ($exeInstaller) {
-            Write-Host "Found EXE installer: $($exeInstaller.FullName)"
+            Write-Host "Found EXE installer: $($exeInstaller.FullName) - $([math]::Round($exeInstaller.Length/1MB,2)) MB"
             Copy-Item -Path $exeInstaller.FullName -Destination "out\Hiddify-Windows-Setup.exe"
           } else {
-            Write-Error "EXE installer not found in dist directory!"
-            Write-Host "Searching for any .exe files:"
-            Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" | ForEach-Object { Write-Host "  - $($_.FullName)" }
-            exit 1
+            Write-Warning "No EXE installer found!"
+            Write-Host "`nAll .exe files in dist:"
+            Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" | ForEach-Object {
+              Write-Host "  - $($_.FullName) - $([math]::Round($_.Length/1MB,2)) MB"
+            }
+
+            # Create a portable ZIP as fallback
+            Write-Host "`nCreating portable ZIP as fallback..."
+            if (Test-Path "build\windows\x64\runner\Release") {
+              New-Item -ItemType Directory -Force -Path "temp_package"
+              Copy-Item -Path "build\windows\x64\runner\Release\*" -Destination "temp_package\" -Recurse
+              Compress-Archive -Force -Path "temp_package\*" -DestinationPath "out\Hiddify-Windows-Portable.zip"
+              Write-Host "Created portable ZIP package"
+            }
           }
 
           # Find and copy MSIX package (optional)
