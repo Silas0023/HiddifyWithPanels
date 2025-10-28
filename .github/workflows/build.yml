@@ -283,6 +283,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: 'stable'
           cache: true
+          architecture: x64  # Use x64 Flutter on ARM64 via emulation
 
       - name: Prepare Windows ARM64 Build
         shell: pwsh
