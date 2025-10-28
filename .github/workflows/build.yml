@@ -180,7 +180,7 @@ jobs:
 
           # Build EXE installer with Inno Setup
           Write-Host "`n=== Building Windows EXE Installer (Inno Setup) ==="
-          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+          flutter_distributor package --platform windows --targets exe --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
 
           if ($LASTEXITCODE -ne 0) {
             Write-Error "EXE installer build failed with exit code $LASTEXITCODE"
@@ -189,7 +189,7 @@ jobs:
 
           # Build MSIX package
           Write-Host "`n=== Building Windows MSIX Package ==="
-          flutter_distributor package --flutter-build-args=verbose --platform windows --targets msix --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+          flutter_distributor package --platform windows --targets msix --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
 
           if ($LASTEXITCODE -ne 0) {
             Write-Warning "MSIX build failed - this is expected without a signing certificate"
