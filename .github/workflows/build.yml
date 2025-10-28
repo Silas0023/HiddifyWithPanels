@@ -172,50 +172,76 @@ jobs:
         run: |
           Write-Host "=== Building Windows Application ==="
 
-          # Just build the Windows app directly with Flutter
-          flutter build windows --target lib/main_prod.dart --release --dart-define sentry_dsn="$env:SENTRY_DSN"
+          # Activate flutter_distributor
+          dart pub global activate flutter_distributor
+
+          # Add to PATH
+          $env:PATH = "$env:PATH;$env:USERPROFILE\.pub-cache\bin"
+
+          # Build EXE installer with Inno Setup
+          Write-Host "`n=== Building Windows EXE Installer (Inno Setup) ==="
+          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Windows build failed with exit code $LASTEXITCODE"
+            Write-Error "EXE installer build failed with exit code $LASTEXITCODE"
             exit 1
           }
 
-          Write-Host "`n=== Windows build completed successfully ==="
+          # Build MSIX package
+          Write-Host "`n=== Building Windows MSIX Package ==="
+          flutter_distributor package --flutter-build-args=verbose --platform windows --targets msix --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "MSIX build failed - this is expected without a signing certificate"
+            Write-Host "Continuing with EXE installer only..."
+          } else {
+            Write-Host "MSIX build succeeded!"
+          }
+
+          Write-Host "`n=== Packaging completed ==="
   
       - name: Package Windows Output
         shell: pwsh
         run: |
-          Write-Host "=== Packaging Windows Output ==="
+          Write-Host "=== Collecting Windows Installers ==="
 
-          # Create output directories
+          # Create output directory
           New-Item -ItemType Directory -Force -Path "out"
-          New-Item -ItemType Directory -Force -Path "temp_package"
 
-          # Verify build output exists
-          $releaseDir = "build\windows\x64\runner\Release"
-          if (-not (Test-Path $releaseDir)) {
-            Write-Error "Build output directory not found: $releaseDir"
+          # List all files in dist directory for debugging
+          Write-Host "`n=== Contents of dist directory ==="
+          if (Test-Path "dist") {
+            Get-ChildItem -Recurse -Path "dist" -File | Select-Object FullName, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+          } else {
+            Write-Error "dist directory not found!"
             exit 1
           }
 
-          Write-Host "=== Build output files ==="
-          Get-ChildItem -Path $releaseDir | Select-Object Name, Length | Format-Table -AutoSize
-
-          # Copy all files to temp package directory
-          Write-Host "`n=== Creating portable package ==="
-          Copy-Item -Path "$releaseDir\*" -Destination "temp_package\" -Recurse
-
-          # Add help files if they exist
-          if (Test-Path ".github\help\mac-windows") {
-            Copy-Item -Path ".github\help\mac-windows\*.url" -Destination "temp_package\" -ErrorAction SilentlyContinue
+          # Find and copy EXE installer
+          Write-Host "`n=== Searching for EXE installer ==="
+          $exeInstaller = Get-ChildItem -Recurse -Path "dist" -Filter "*-windows-setup.exe" -File | Select-Object -First 1
+          if ($exeInstaller) {
+            Write-Host "Found EXE installer: $($exeInstaller.FullName)"
+            Copy-Item -Path $exeInstaller.FullName -Destination "out\Hiddify-Windows-Setup.exe"
+          } else {
+            Write-Error "EXE installer not found in dist directory!"
+            Write-Host "Searching for any .exe files:"
+            Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" | ForEach-Object { Write-Host "  - $($_.FullName)" }
+            exit 1
           }
 
-          # Create ZIP
-          Write-Host "`n=== Creating ZIP archive ==="
-          Compress-Archive -Force -Path "temp_package\*" -DestinationPath "out\Hiddify-Windows-x64-Portable.zip"
+          # Find and copy MSIX package (optional)
+          Write-Host "`n=== Searching for MSIX package ==="
+          $msixPackage = Get-ChildItem -Recurse -Path "dist" -Filter "*.msix" -File | Select-Object -First 1
+          if ($msixPackage) {
+            Write-Host "Found MSIX package: $($msixPackage.FullName)"
+            Copy-Item -Path $msixPackage.FullName -Destination "out\Hiddify-Windows.msix"
+          } else {
+            Write-Warning "MSIX package not found - this is expected without code signing certificate"
+          }
 
           # List final output
-          Write-Host "`n=== Final package ==="
+          Write-Host "`n=== Final installers ==="
           Get-ChildItem -Path "out" | Select-Object Name, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
           
       - name: Upload Windows Artifact
