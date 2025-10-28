@@ -1,10 +1,11 @@
-name: Simple Release Build
+name: Simple Release Build (Disabled)
 
 on:
-  push:
-    tags:
-      - 'v*'
-      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:  # 只允许手动触发
+  # push:
+  #   tags:
+  #     - 'v*'
+  #     - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build-android:
