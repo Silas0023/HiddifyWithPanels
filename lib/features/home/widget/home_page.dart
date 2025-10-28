@@ -8,6 +8,7 @@ import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/common/nested_app_bar.dart';
 import 'package:hiddify/features/home/widget/connection_button.dart';
 import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
+import 'package:hiddify/features/home/widget/subscription_info_card.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/widget/profile_tile.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
@@ -68,6 +69,8 @@ class HomePage extends HookConsumerWidget {
                     children: [
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       ProfileTile(profile: profile, isMain: true),
+                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                      const SliverToBoxAdapter(child: SubscriptionInfoCard()),
                       const SliverToBoxAdapter(child: SizedBox(height: 16)),
                       SliverFillRemaining(
                         hasScrollBody: false,
@@ -85,8 +88,7 @@ class HomePage extends HookConsumerWidget {
                                 ],
                               ),
                             ),
-                            if (MediaQuery.sizeOf(context).width < 840)
-                              const ActiveProxyFooter(),
+                            if (MediaQuery.sizeOf(context).width < 840) const ActiveProxyFooter(),
                           ],
                         ),
                       ),
@@ -94,15 +96,15 @@ class HomePage extends HookConsumerWidget {
                   ),
                 // 修改无活跃配置文件时的提示信息
                 AsyncData() => switch (hasAnyProfile) {
-                    AsyncData(value: true) =>
-                      const EmptyActiveProfileHomeBody(),
+                    AsyncData(value: true) => const EmptyActiveProfileHomeBody(),
                     _ => SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(t.home.noSubscriptionMsg,
+                              Text(
+                                t.home.noSubscriptionMsg,
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
@@ -119,8 +121,7 @@ class HomePage extends HookConsumerWidget {
                         ),
                       ),
                   },
-                AsyncError(:final error) =>
-                  SliverErrorBodyPlaceholder(t.presentShortError(error)),
+                AsyncError(:final error) => SliverErrorBodyPlaceholder(t.presentShortError(error)),
                 _ => const SliverToBoxAdapter(),
               },
             ],

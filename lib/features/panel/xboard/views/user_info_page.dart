@@ -1,10 +1,12 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
+import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/account_balance_card.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/invite_code_section.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/reset_subscription_button.dart';
+import 'package:hiddify/features/panel/xboard/views/components/user_info/traffic_chart_card.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/user_info_card.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -115,25 +117,47 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
           }
 
           // 如果数据加载成功，显示整个视图
+          final data = snapshot.data!;
+          final userInfo = data[0] as UserInfo?;
+
+          // 如果没有用户信息，显示错误
+          if (userInfo == null) {
+            return Center(
+              child: Text(
+                '无法加载用户信息',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+            );
+          }
+
           return RefreshIndicator(
             onRefresh: () async {
               _refreshData();
               await Future.delayed(const Duration(milliseconds: 500));
             },
-            child: const SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  UserInfoCard(),
-                  SizedBox(height: 16),
-                  AccountBalanceCard(),
-                  SizedBox(height: 16),
-                  InviteCodeSection(),
-                  SizedBox(height: 16),
-                  ResetSubscriptionButton(),
-                  SizedBox(height: 32),
+                  const UserInfoCard(),
+                  const SizedBox(height: 16),
+                  // 流量图表卡片
+                  TrafficChartCard(
+                    userInfo: userInfo,
+                    t: t,
+                  ),
+                  const SizedBox(height: 16),
+                  const AccountBalanceCard(),
+                  const SizedBox(height: 16),
+                  const InviteCodeSection(),
+                  const SizedBox(height: 16),
+                  const ResetSubscriptionButton(),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),

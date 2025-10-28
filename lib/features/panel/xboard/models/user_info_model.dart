@@ -1,6 +1,8 @@
 class UserInfo {
   final String email;
-  final double transferEnable;
+  final double transferEnable; // 总流量（字节）
+  final double u; // 上传流量（字节）
+  final double d; // 下载流量（字节）
   final int? lastLoginAt; // 允许为 null
   final int createdAt;
   final bool banned; // 账户状态, true: 被封禁, false: 正常
@@ -19,6 +21,8 @@ class UserInfo {
   UserInfo({
     required this.email,
     required this.transferEnable,
+    required this.u,
+    required this.d,
     this.lastLoginAt,
     required this.createdAt,
     required this.banned,
@@ -35,6 +39,31 @@ class UserInfo {
     required this.avatarUrl,
   });
 
+  // 计算已使用流量（上传+下载）
+  double get usedTraffic => u + d;
+
+  // 计算剩余流量
+  double get remainingTraffic => transferEnable - usedTraffic;
+
+  // 计算使用百分比
+  double get usagePercentage =>
+      transferEnable > 0 ? (usedTraffic / transferEnable * 100) : 0;
+
+  // 计算剩余天数
+  int? get remainingDays {
+    if (expiredAt == null) return null;
+    final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt! * 1000);
+    final now = DateTime.now();
+    final difference = expireDate.difference(now);
+    return difference.inDays;
+  }
+
+  // 判断是否已过期
+  bool get isExpired {
+    final days = remainingDays;
+    return days != null && days < 0;
+  }
+
   // 从 JSON 创建 UserInfo 实例
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
@@ -43,6 +72,10 @@ class UserInfo {
 
       // 转换为 double，如果为 null，返回 0.0
       transferEnable: (json['transfer_enable'] as num?)?.toDouble() ?? 0.0,
+
+      // 流量使用数据
+      u: (json['u'] as num?)?.toDouble() ?? 0.0,
+      d: (json['d'] as num?)?.toDouble() ?? 0.0,
 
       // 时间字段可以为 null
       lastLoginAt: json['last_login_at'] as int?,
