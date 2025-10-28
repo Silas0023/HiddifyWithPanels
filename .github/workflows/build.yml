@@ -178,22 +178,24 @@ jobs:
           # Add to PATH
           $env:PATH = "$env:PATH;$env:USERPROFILE\.pub-cache\bin"
 
-          # Build EXE installer with Inno Setup
-          Write-Host "`n=== Building Windows EXE Installer (Inno Setup) ==="
-          flutter_distributor package --platform windows --targets exe --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+          # Build Windows packages using distribute_options.yaml configuration
+          Write-Host "`n=== Building Windows Packages ===\"
+
+          # Build EXE installer
+          Write-Host "Building EXE installer with Inno Setup..."
+          flutter_distributor release --name prod --jobs release-windows-exe
 
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "EXE installer build failed with exit code $LASTEXITCODE"
+            Write-Error "EXE installer build failed"
             exit 1
           }
 
-          # Build MSIX package
-          Write-Host "`n=== Building Windows MSIX Package ==="
-          flutter_distributor package --platform windows --targets msix --skip-clean --build-target lib/main_prod.dart --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+          # Build MSIX package (optional)
+          Write-Host "`nBuilding MSIX package..."
+          flutter_distributor release --name prod --jobs release-windows-msix
 
           if ($LASTEXITCODE -ne 0) {
             Write-Warning "MSIX build failed - this is expected without a signing certificate"
-            Write-Host "Continuing with EXE installer only..."
           } else {
             Write-Host "MSIX build succeeded!"
           }
@@ -220,32 +222,29 @@ jobs:
           # Find and copy EXE installer
           Write-Host "`n=== Searching for EXE installer ==="
 
-          # Inno Setup creates an installer with the name specified in output_base_file_name
-          # The installer is in the same directory as the .iss file: dist/version/folder-name/
-          # Look for the installer with the exact name pattern: Hiddify-Windows-Setup.exe
+          # List all files in dist for debugging
+          Write-Host "All files in dist directory:"
+          Get-ChildItem -Recurse -Path "dist" -File | Select-Object FullName, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
 
-          # Search for the Inno Setup generated installer
-          $exeInstaller = Get-ChildItem -Recurse -Path "dist" -Filter "Hiddify-Windows-Setup.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
-
-          if (-not $exeInstaller) {
-            # Fallback: look for any file matching pattern *Setup.exe that's >10MB
-            Write-Host "Primary search failed, looking for *Setup.exe files >10MB..."
-            $allSetupExes = Get-ChildItem -Recurse -Path "dist" -Filter "*Setup.exe" -File | Where-Object { $_.Length -gt 10MB }
-            if ($allSetupExes) {
-              $allSetupExes | ForEach-Object { Write-Host "  Found: $($_.Name) - $([math]::Round($_.Length/1MB,2)) MB at $($_.DirectoryName)" }
-              $exeInstaller = $allSetupExes | Select-Object -First 1
-            }
+          # flutter_distributor creates installers in dist/<version>/ directory
+          # Look for .exe files that are installers (typically >50MB with "Setup" in name or just large exe files)
+          $exeInstallers = Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" -File | Where-Object {
+            $_.Name -match "Setup" -or $_.Length -gt 50MB
           }
 
-          if ($exeInstaller) {
-            Write-Host "Found EXE installer: $($exeInstaller.FullName) - $([math]::Round($exeInstaller.Length/1MB,2)) MB"
-            Copy-Item -Path $exeInstaller.FullName -Destination "out\Hiddify-Windows-Setup.exe"
-          } else {
-            Write-Warning "No EXE installer found!"
-            Write-Host "`nListing all files in dist directory:"
-            Get-ChildItem -Recurse -Path "dist" -File | Select-Object FullName, @{Name="Size(MB)";Expression={[math]::Round($_.Length/1MB,2)}} | Format-Table -AutoSize
+          if ($exeInstallers) {
+            Write-Host "`nFound EXE installer candidates:"
+            $exeInstallers | ForEach-Object {
+              Write-Host "  $($_.Name) - $([math]::Round($_.Length/1MB,2)) MB at $($_.DirectoryName)"
+            }
 
-            Write-Error "Inno Setup installer was not created. Check if Inno Setup compilation succeeded."
+            # Use the first (or largest) installer found
+            $exeInstaller = $exeInstallers | Sort-Object -Property Length -Descending | Select-Object -First 1
+            Write-Host "`nSelected: $($exeInstaller.Name) - $([math]::Round($exeInstaller.Length/1MB,2)) MB"
+            Copy-Item -Path $exeInstaller.FullName -Destination "out\Hiddify-Windows-Setup.exe"
+            Write-Host "Copied to out\Hiddify-Windows-Setup.exe"
+          } else {
+            Write-Error "No EXE installer found in dist directory"
             exit 1
           }
 
