@@ -171,38 +171,78 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "=== Building Windows Application ==="
-          
+
           # Activate flutter_distributor
           dart pub global activate flutter_distributor
-          
+
           # Add to PATH
           $env:PATH = "$env:PATH;$env:USERPROFILE\.pub-cache\bin"
-          
-          # Build with flutter_distributor
-          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe,msix --skip-clean --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+
+          # Build with flutter_distributor - try targets separately to see which fails
+          Write-Host "`n=== Building Windows EXE ==="
+          flutter_distributor package --flutter-build-args=verbose --platform windows --targets exe --skip-clean --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "EXE build failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+
+          Write-Host "`n=== Building Windows MSIX ==="
+          flutter_distributor package --flutter-build-args=verbose --platform windows --targets msix --skip-clean --build-dart-define sentry_dsn="$env:SENTRY_DSN"
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "MSIX build failed with exit code $LASTEXITCODE - continuing without MSIX"
+          }
   
       - name: Package Windows Output
         shell: pwsh
         run: |
           Write-Host "=== Packaging Windows Output ==="
-          
+
           # Create output directories
           New-Item -ItemType Directory -Force -Path "out"
           New-Item -ItemType Directory -Force -Path "dist\tmp"
-          
-          # Copy installer files
-          Get-ChildItem -Recurse -Path "dist" -Filter "*windows-setup.exe" | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.exe" -ErrorAction SilentlyContinue
-          Get-ChildItem -Recurse -Path "dist" -Filter "*windows.msix" | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.msix" -ErrorAction SilentlyContinue
-          
+
+          # Debug: List all files in dist directory
+          Write-Host "=== Contents of dist directory ==="
+          if (Test-Path "dist") {
+            Get-ChildItem -Recurse -Path "dist" | Select-Object FullName, Length | Format-Table -AutoSize
+          } else {
+            Write-Host "WARNING: dist directory does not exist!"
+          }
+
+          # Search for installer files
+          Write-Host "`n=== Searching for EXE files ==="
+          $exeFiles = Get-ChildItem -Recurse -Path "dist" -Filter "*.exe" -ErrorAction SilentlyContinue
+          if ($exeFiles) {
+            $exeFiles | ForEach-Object { Write-Host "Found EXE: $($_.FullName)" }
+            $exeFiles | Select-Object -First 1 | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.exe"
+          } else {
+            Write-Host "WARNING: No EXE files found in dist directory"
+          }
+
+          Write-Host "`n=== Searching for MSIX files ==="
+          $msixFiles = Get-ChildItem -Recurse -Path "dist" -Filter "*.msix" -ErrorAction SilentlyContinue
+          if ($msixFiles) {
+            $msixFiles | ForEach-Object { Write-Host "Found MSIX: $($_.FullName)" }
+            $msixFiles | Select-Object -First 1 | Copy-Item -Destination "out\Hiddify-Windows-Setup-x64.msix"
+          } else {
+            Write-Host "WARNING: No MSIX files found in dist directory"
+          }
+
           # Create portable package
-          Copy-Item -Path "build\windows\x64\runner\Release" -Destination "dist\tmp\hiddify-next" -Recurse
-          Copy-Item -Path ".github\help\mac-windows\*.url" -Destination "dist\tmp\hiddify-next\" -ErrorAction SilentlyContinue
-          
-          # Create ZIP
-          Compress-Archive -Force -Path "dist\tmp\hiddify-next" -DestinationPath "out\Hiddify-Windows-Portable-x64.zip"
-          
+          Write-Host "`n=== Creating portable ZIP ==="
+          if (Test-Path "build\windows\x64\runner\Release") {
+            Copy-Item -Path "build\windows\x64\runner\Release" -Destination "dist\tmp\hiddify-next" -Recurse
+            Copy-Item -Path ".github\help\mac-windows\*.url" -Destination "dist\tmp\hiddify-next\" -ErrorAction SilentlyContinue
+            Compress-Archive -Force -Path "dist\tmp\hiddify-next" -DestinationPath "out\Hiddify-Windows-Portable-x64.zip"
+          } else {
+            Write-Host "WARNING: build\windows\x64\runner\Release directory not found"
+          }
+
           # List output
-          Get-ChildItem -Path "out"
+          Write-Host "`n=== Final output directory contents ==="
+          Get-ChildItem -Path "out" | Select-Object Name, Length | Format-Table -AutoSize
           
       - name: Upload Windows Artifact
         if: env.UPLOAD_ARTIFACT == 'true'
