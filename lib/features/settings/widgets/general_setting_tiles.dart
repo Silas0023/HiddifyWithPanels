@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hiddify/core/haptic/haptic_service.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/preferences/general_preferences.dart';
+import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/auto_start/notifier/auto_start_notifier.dart';
 import 'package:hiddify/features/common/general_pref_tiles.dart';
 import 'package:hiddify/utils/utils.dart';
@@ -22,6 +23,11 @@ class GeneralSettingTiles extends HookConsumerWidget {
         const LocalePrefTile(),
         const ThemeModePrefTile(),
         const EnableAnalyticsPrefTile(),
+        ListTile(
+          title: const Text('客服支持'),
+          leading: const Icon(FluentIcons.chat_help_24_regular),
+          onTap: () => const CustomerSupportRoute().push(context),
+        ),
         SwitchListTile(
           title: Text(t.settings.general.autoIpCheck),
           secondary: const Icon(FluentIcons.globe_search_24_regular),

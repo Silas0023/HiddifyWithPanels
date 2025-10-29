@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  dynamic_color
   protocol_handler_windows
   screen_retriever
   share_plus

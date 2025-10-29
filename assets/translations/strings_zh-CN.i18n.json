@@ -1,6 +1,6 @@
 {
     "general": {
-        "appTitle": "Hiddify",
+        "appTitle": "蓝快加速器",
         "reset": "重置",
         "toggle": {
             "enabled": "启用",
@@ -453,7 +453,7 @@
         },
         "singbox": {
             "unexpected": "意外服务错误",
-            "serviceNotRunning": "服务未运行",
+            "serviceNotRunning": "请连接VPN后在切换国家",
             "missingPrivilege": "缺少权限",
             "missingPrivilegeMsg": "VPN 模式需要管理员权限。以管理员身份重新启动应用程序或更改服务模式",
             "missingGeoAssets": "缺失 GEO 资源文件",

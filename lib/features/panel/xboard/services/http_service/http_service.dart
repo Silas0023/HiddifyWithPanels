@@ -43,7 +43,7 @@ class HttpService {
         print('==========================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       } else {
         throw Exception("GET request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -98,7 +98,7 @@ class HttpService {
         print('===========================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       } else {
         throw Exception("POST request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -143,7 +143,7 @@ class HttpService {
         print('========================================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       } else {
         throw Exception("POST request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -198,7 +198,7 @@ class HttpService {
         print('================================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       } else {
         throw Exception("POST form request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }

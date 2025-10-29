@@ -128,13 +128,6 @@ class AppTheme {
       drawerTheme: const DrawerThemeData(
         backgroundColor: Colors.white,
       ),
-      cardTheme: CardTheme(
-        color: Colors.white,
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
       textTheme: const TextTheme(
         bodyLarge: TextStyle(color: Colors.black87),
         bodyMedium: TextStyle(color: Colors.black87),

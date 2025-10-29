@@ -60,6 +60,7 @@ class AddProfile extends _$AddProfile with AppLogger {
   Future<void> add(String rawInput) async {
     if (state.isLoading) return;
     state = const AsyncLoading();
+    print('[AddProfile] 收到原始输入: $rawInput');
     // await check4Warp(rawInput);
     state = await AsyncValue.guard(
       () async {
@@ -67,13 +68,14 @@ class AddProfile extends _$AddProfile with AppLogger {
         final markAsActive = activeProfile == null || ref.read(Preferences.markNewProfileActive);
         final TaskEither<ProfileFailure, Unit> task;
         if (LinkParser.parse(rawInput) case (final link)?) {
+          print('[AddProfile] 解析后的link.url: ${link.url}');
           loggy.debug("adding profile, url:(profile_notifier) [${link.url}]");
           task = _profilesRepo.addByUrl(
-            // link.url,
-            "https://aa18.de/api/v1/client/subscribe?token=7f283b48ed41521fa1a6bbbd71cb254f",
+            link.url,  // 使用实际的URL而不是硬编码的
             markAsActive: markAsActive,
             cancelToken: _cancelToken = CancelToken(),
           );
+          print('[AddProfile] 准备调用 addByUrl，URL: ${link.url}');
         } else if (LinkParser.protocol(rawInput) case (final parsed)?) {
           loggy.debug("adding profile, content");
           var name = parsed.name;

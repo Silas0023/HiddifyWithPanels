@@ -54,44 +54,35 @@ class HomePage extends HookConsumerWidget {
                     ],
                   ),
                 ),
-                actions: [
-                  // 仅保留快速设置按钮，移除添加配置文件的按钮
-                  IconButton(
-                    onPressed: () => const QuickSettingsRoute().push(context),
-                    icon: const Icon(FluentIcons.options_24_filled),
-                    tooltip: t.config.quickSettings,
-                  ),
-                ],
+                // 隐藏右上角快速设置按钮
+                // actions: [
+                //   IconButton(
+                //     onPressed: () => const QuickSettingsRoute().push(context),
+                //     icon: const Icon(FluentIcons.options_24_filled),
+                //     tooltip: t.config.quickSettings,
+                //   ),
+                // ],
               ),
               switch (activeProfile) {
                 // 如果有活跃的配置文件，显示相应的内容
                 AsyncData(value: final profile?) => MultiSliver(
                     children: [
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                      ProfileTile(profile: profile, isMain: true),
+                      // 隐藏配置文件卡片
+                      // ProfileTile(profile: profile, isMain: true),
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       const SliverToBoxAdapter(child: SubscriptionInfoCard()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Expanded(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ConnectionButton(),
-                                  SizedBox(height: 16),
-                                  ActiveProxyDelayIndicator(),
-                                ],
-                              ),
-                            ),
-                            if (MediaQuery.sizeOf(context).width < 840) const ActiveProxyFooter(),
-                          ],
-                        ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      const SliverToBoxAdapter(
+                        child: ConnectionButton(),
                       ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      const SliverToBoxAdapter(
+                        child: ActiveProxyDelayIndicator(),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      // 隐藏底部连接信息卡片（显示"连接"标题、代理名称和IP地址）
+                      // if (MediaQuery.sizeOf(context).width < 840) const SliverToBoxAdapter(child: ActiveProxyFooter()),
                     ],
                   ),
                 // 修改无活跃配置文件时的提示信息

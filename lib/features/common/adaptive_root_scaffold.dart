@@ -31,11 +31,11 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
     final destinations = [
       NavigationDestination(
         icon: const Icon(FluentIcons.power_20_filled),
-        label: t.home.pageTitle,
+        label: '连接VPN',
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.filter_20_filled),
-        label: t.proxies.pageTitle,
+        label: '国家选择',
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.apps_24_filled),
@@ -61,13 +61,14 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
         icon: const Icon(FluentIcons.document_text_20_filled),
         label: t.logs.pageTitle,
       ),
-      NavigationDestination(
-        icon: const Icon(FluentIcons.info_20_filled),
-        label: t.about.pageTitle,
-      ),
+      // 隐藏关于菜单
+      // NavigationDestination(
+      //   icon: const Icon(FluentIcons.info_20_filled),
+      //   label: t.about.pageTitle,
+      // ),
       NavigationDestination(
         icon: const Icon(FluentIcons.sign_out_20_filled),
-        label: t.logout.buttonText,
+        label: '退出',
       ),
     ];
 

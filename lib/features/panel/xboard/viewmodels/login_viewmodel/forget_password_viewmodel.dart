@@ -33,7 +33,7 @@ class ForgetPasswordViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.sendVerificationCode(email);
+      await _authService.sendVerificationCode(email, tag: 'forget');
 
       // 只有发送成功后才开始倒计时
       while (_countdownTime > 0) {

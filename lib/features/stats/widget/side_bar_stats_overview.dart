@@ -7,7 +7,7 @@ import 'package:hiddify/core/utils/preferences_utils.dart';
 import 'package:hiddify/core/widget/animated_text.dart';
 import 'package:hiddify/features/stats/model/stats_entity.dart';
 import 'package:hiddify/features/stats/notifier/stats_notifier.dart';
-import 'package:hiddify/features/stats/widget/connection_stats_card.dart';
+// import 'package:hiddify/features/stats/widget/connection_stats_card.dart'; // 隐藏连接信息卡片后不再需要
 import 'package:hiddify/features/stats/widget/stats_card.dart';
 import 'package:hiddify/utils/number_formatters.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -64,7 +64,8 @@ class SideBarStatsOverview extends HookConsumerWidget {
               ),
             ),
           ),
-          const ConnectionStatsCard(),
+          // 隐藏侧边栏的连接信息卡片（显示"连接"、代理名称和IP地址）
+          // const ConnectionStatsCard(),
           const Gap(12),
           AnimatedCrossFade(
             crossFadeState:

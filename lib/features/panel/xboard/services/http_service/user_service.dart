@@ -23,7 +23,8 @@ class UserService {
         "/api/v1/user/getSubscribe",
         headers: {'Authorization': token},
       );
-      return response['status'] == 'success';
+      // 如果请求成功返回且有data字段，说明token有效
+      return response.containsKey('data');
     } catch (_) {
       return false;
     }

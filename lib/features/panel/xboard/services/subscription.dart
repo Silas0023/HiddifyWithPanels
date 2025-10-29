@@ -14,8 +14,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 class Subscription {
   static final SubscriptionService _subscriptionService = SubscriptionService();
   // 公共方法：处理获取新订阅链接的逻辑
-  static Future<void> _handleSubscription(BuildContext context, WidgetRef ref,
-      Future<String?> Function(String) getSubscriptionLink) async {
+  static Future<void> _handleSubscription(BuildContext context, WidgetRef ref, Future<String?> Function(String) getSubscriptionLink) async {
     final t = ref.watch(translationsProvider);
     final accessToken = await getToken();
     if (accessToken == null) {
@@ -24,22 +23,22 @@ class Subscription {
     }
 
     try {
+      print('[Subscription] 开始获取新订阅链接...');
       // 获取新的订阅链接
       final newSubscriptionLink = await getSubscriptionLink(accessToken);
+      print('[Subscription] 获取到的订阅链接: $newSubscriptionLink');
       if (newSubscriptionLink != null) {
         // 删除旧的订阅配置
-        final profileRepository =
-            await ref.read(profileRepositoryProvider.future);
+        final profileRepository = await ref.read(profileRepositoryProvider.future);
         final profilesResult = await profileRepository.watchAll().first;
         final profiles = profilesResult.getOrElse((_) => []);
         for (final profile in profiles) {
           if (profile is RemoteProfileEntity) {
-            await ref
-                .read(profilesOverviewNotifierProvider.notifier)
-                .deleteProfile(profile);
+            await ref.read(profilesOverviewNotifierProvider.notifier).deleteProfile(profile);
           }
         }
 
+        print('[Subscription] 准备添加新订阅: $newSubscriptionLink');
         // 添加新的订阅链接
         await ref.read(addProfileProvider.notifier).add(newSubscriptionLink);
 
@@ -47,9 +46,7 @@ class Subscription {
         final newProfilesResult = await profileRepository.watchAll().first;
         final newProfiles = newProfilesResult.getOrElse((_) => []);
         final newProfile = newProfiles.firstWhere(
-          (profile) =>
-              profile is RemoteProfileEntity &&
-              profile.url == newSubscriptionLink,
+          (profile) => profile is RemoteProfileEntity && profile.url == newSubscriptionLink,
           orElse: () {
             if (newProfiles.isNotEmpty) {
               return newProfiles[0];
@@ -64,29 +61,35 @@ class Subscription {
         ref.read(activeProfileProvider.notifier).update((_) => newProfile);
 
         // 显示成功提示
-        _showSnackbar(
-            context,
-            getSubscriptionLink == _subscriptionService.resetSubscriptionLink
-                ? t.userInfo.subscriptionResetSuccess
-                : t.userInfo.subscriptionUpdateSuccess);
+        // _showSnackbar(
+        //     context,
+        //     getSubscriptionLink == _subscriptionService.resetSubscriptionLink
+        //         ? t.userInfo.subscriptionResetSuccess
+        //         : t.userInfo.subscriptionUpdateSuccess);
       }
     } catch (e) {
-      _showSnackbar(context,
-          "${getSubscriptionLink == _subscriptionService.resetSubscriptionLink ? t.userInfo.subscriptionResetError : t.userInfo.subscriptionUpdateError} $e");
+      _showSnackbar(context, "${getSubscriptionLink == _subscriptionService.resetSubscriptionLink ? t.userInfo.subscriptionResetError : t.userInfo.subscriptionUpdateError} $e");
     }
   }
 
   // 更新订阅的方法
   static Future<void> updateSubscription(
-      BuildContext context, WidgetRef ref,) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     await _handleSubscription(context, ref, _subscriptionService.getSubscriptionLink);
   }
 
   // 重置订阅的方法
   static Future<void> resetSubscription(
-      BuildContext context, WidgetRef ref,) async {
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     await _handleSubscription(
-        context, ref, _subscriptionService.resetSubscriptionLink,);
+      context,
+      ref,
+      _subscriptionService.resetSubscriptionLink,
+    );
   }
 
   // 显示提示信息

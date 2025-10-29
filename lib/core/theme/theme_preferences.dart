@@ -12,7 +12,7 @@ class ThemePreferences extends _$ThemePreferences {
         .watch(sharedPreferencesProvider)
         .requireValue
         .getString("theme_mode");
-    if (persisted == null) return AppThemeMode.system;
+    if (persisted == null) return AppThemeMode.light;
     return AppThemeMode.values.byName(persisted);
   }
 

@@ -14,7 +14,6 @@ class AppCenterPage extends HookConsumerWidget {
     final t = ref.watch(translationsProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final shortcutsAsync = ref.watch(shortcutsProvider);
-    final categoriesAsync = ref.watch(shortcutCategoriesProvider);
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
@@ -30,33 +29,10 @@ class AppCenterPage extends HookConsumerWidget {
               ),
             ),
           ),
-          categoriesAsync.when(
-            data: (categories) {
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                sliver: SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 42,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 10),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return _buildCategoryChip(context, isDark, category.title);
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-            loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
-            error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-          ),
+          // 移除分类标签显示
           shortcutsAsync.when(
             data: (shortcuts) {
-              final enabledShortcuts = shortcuts.where((s) => s.isEnabled == "1").toList()
-                ..sort((a, b) => a.order.compareTo(b.order));
+              final enabledShortcuts = shortcuts.where((s) => s.isEnabled == "1").toList()..sort((a, b) => a.order.compareTo(b.order));
 
               return SliverPadding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -113,9 +89,7 @@ class AppCenterPage extends HookConsumerWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF1E293B)
-                            : Colors.white,
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
@@ -187,39 +161,6 @@ class AppCenterPage extends HookConsumerWidget {
     }
   }
 
-  Widget _buildCategoryChip(BuildContext context, bool isDark, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? const Color(0xFF334155)
-              : const Color(0xFFE2E8F0),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: isDark ? Colors.white : const Color(0xFF334155),
-        ),
-      ),
-    );
-  }
-
   Widget _buildShortcutCard(
     BuildContext context,
     bool isDark,
@@ -266,9 +207,7 @@ class AppCenterPage extends HookConsumerWidget {
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isDark
-              ? color.withOpacity(0.15)
-              : color.withOpacity(0.2),
+          color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.2),
           width: 2,
         ),
         boxShadow: [
@@ -279,9 +218,7 @@ class AppCenterPage extends HookConsumerWidget {
             spreadRadius: -4,
           ),
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.4)
-                : Colors.black.withOpacity(0.04),
+            color: isDark ? Colors.black.withOpacity(0.4) : Colors.black.withOpacity(0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -322,14 +259,7 @@ class AppCenterPage extends HookConsumerWidget {
                   width: iconSize,
                   height: iconSize,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        color.withOpacity(0.25),
-                        color.withOpacity(0.15),
-                      ],
-                    ),
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
                     borderRadius: BorderRadius.circular(iconSize * 0.28),
                     boxShadow: [
                       BoxShadow(
@@ -339,41 +269,62 @@ class AppCenterPage extends HookConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Stack(
-                    children: [
-                      // 背景装饰圆圈
-                      Positioned(
-                        top: -10,
-                        right: -10,
-                        child: Container(
-                          width: iconSize * 0.55,
-                          height: iconSize * 0.55,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(iconSize * 0.28),
+                    child: Image.network(
+                      shortcut.icon,
+                      width: iconSize,
+                      height: iconSize,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        // 加载失败时显示首字母作为后备
+                        return Container(
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(isDark ? 0.05 : 0.3),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                color.withOpacity(0.25),
+                                color.withOpacity(0.15),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      // 字母图标
-                      Center(
-                        child: Text(
-                          shortcut.icon.toUpperCase().substring(0, 1),
-                          style: TextStyle(
-                            fontSize: iconFontSize,
-                            fontWeight: FontWeight.w900,
-                            color: color,
-                            letterSpacing: -1,
-                            shadows: [
-                              Shadow(
-                                color: color.withOpacity(0.3),
-                                offset: const Offset(0, 2),
-                                blurRadius: 4,
+                          child: Center(
+                            child: Text(
+                              shortcut.name.isNotEmpty ? shortcut.name.substring(0, 1).toUpperCase() : '?',
+                              style: TextStyle(
+                                fontSize: iconFontSize,
+                                fontWeight: FontWeight.w900,
+                                color: color,
+                                letterSpacing: -1,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        // 加载中显示进度指示器
+                        return Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                color.withOpacity(0.25),
+                                color.withOpacity(0.15),
+                              ],
+                            ),
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 SizedBox(height: cardPadding * 0.8),
@@ -399,9 +350,7 @@ class AppCenterPage extends HookConsumerWidget {
                     fontSize: descFontSize,
                     height: 1.5,
                     fontWeight: FontWeight.w400,
-                    color: isDark
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF64748B),
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,

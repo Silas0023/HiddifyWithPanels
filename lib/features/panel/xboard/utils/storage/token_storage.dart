@@ -3,18 +3,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> storeToken(String token) async {
   final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('auth_token', token);
+  final result = await prefs.setString('auth_token', token);
   if (kDebugMode) {
-    print('Token stored: $token');
+    print('[TokenStorage] Token stored successfully: $result');
+    print('[TokenStorage] Token value: ${token.substring(0, 20)}...');
   }
 }
 
 Future<String?> getToken() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getString('auth_token');
+  final token = prefs.getString('auth_token');
+  if (kDebugMode) {
+    if (token != null) {
+      print('[TokenStorage] Token retrieved: ${token.substring(0, 20)}...');
+    } else {
+      print('[TokenStorage] No token found in storage');
+    }
+  }
+  return token;
 }
 
 Future<void> deleteToken() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove('auth_token');
+  if (kDebugMode) {
+    print('[TokenStorage] Token deleted from storage');
+  }
 }

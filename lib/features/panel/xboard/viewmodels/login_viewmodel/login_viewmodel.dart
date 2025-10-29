@@ -21,25 +21,36 @@ class LoginViewModel extends ChangeNotifier {
 
   LoginViewModel({required AuthService authService})
       : _authService = authService {
-    _loadSavedCredentials();
+    // 初始化时不自动加载账号密码
+    _loadRememberMeState();
   }
 
-  Future<void> _loadSavedCredentials() async {
+  // 只加载"记住我"的状态
+  Future<void> _loadRememberMeState() async {
     final prefs = await SharedPreferences.getInstance();
-    usernameController.text = prefs.getString('saved_username') ?? '';
-    passwordController.text = prefs.getString('saved_password') ?? '';
     _isRememberMe = prefs.getBool('is_remember_me') ?? false;
     notifyListeners();
   }
 
+  // 加载邮箱登录的保存账号密码（仅在切换到邮箱登录时调用）
+  Future<void> loadEmailCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_isRememberMe) {
+      usernameController.text = prefs.getString('saved_email') ?? '';
+      passwordController.text = prefs.getString('saved_email_password') ?? '';
+    }
+    notifyListeners();
+  }
+
+  // 保存邮箱登录的账号密码
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (_isRememberMe) {
-      await prefs.setString('saved_username', usernameController.text);
-      await prefs.setString('saved_password', passwordController.text);
+      await prefs.setString('saved_email', usernameController.text);
+      await prefs.setString('saved_email_password', passwordController.text);
     } else {
-      await prefs.remove('saved_username');
-      await prefs.remove('saved_password');
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_email_password');
     }
     await prefs.setBool('is_remember_me', _isRememberMe);
   }

@@ -1,7 +1,9 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
+import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/purchase_viewmodel.dart';
@@ -37,11 +39,28 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
+    final isSmallScreen = Breakpoints.small.isActive(context);
+
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+        // 在小窗口时显示左上角菜单按钮
+        leading: isSmallScreen
+            ? Builder(
+                builder: (context) => IconButton(
+                  icon: Icon(
+                    Icons.menu,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  tooltip: '菜单',
+                  onPressed: () {
+                    RootScaffold.stateKey.currentState?.openDrawer();
+                  },
+                ),
+              )
+            : null,
         title: Text(
           t.purchase.pageTitle,
           style: TextStyle(
@@ -49,36 +68,6 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             color: isDark ? Colors.white : Colors.black87,
           ),
         ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.menu,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              context.push('/order');
-            },
-            icon: Icon(
-              FluentIcons.receipt_24_regular,
-              color: theme.colorScheme.primary,
-              size: 20,
-            ),
-            label: Text(
-              t.order.title,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -132,28 +121,28 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             } else {
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  // 根据屏幕宽度计算列数
+                  // 根据屏幕宽度计算列数和卡片尺寸
                   int crossAxisCount;
                   double childAspectRatio;
 
                   if (constraints.maxWidth > 1400) {
                     crossAxisCount = 3; // 超大屏幕：3列
-                    childAspectRatio = 0.75;
+                    childAspectRatio = 0.65; // 增加高度
                   } else if (constraints.maxWidth > 900) {
                     crossAxisCount = 2; // 中等屏幕：2列
-                    childAspectRatio = 0.7;
+                    childAspectRatio = 0.6; // 增加高度
                   } else {
                     crossAxisCount = 1; // 小屏幕：1列
-                    childAspectRatio = 0.85;
+                    childAspectRatio = 0.75; // 增加高度
                   }
 
                   return GridView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
                       childAspectRatio: childAspectRatio,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 20,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 24,
                     ),
                     itemCount: viewModel.plans.length,
                     itemBuilder: (context, index) {
@@ -192,12 +181,13 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: gradientColors[0].withOpacity(0.25),
+            blurRadius: 24,
+            spreadRadius: 2,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -205,7 +195,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -220,7 +210,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                   end: Alignment.bottomRight,
                 ),
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -322,7 +312,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             Expanded(
               child: Container(
                 color: isDark ? Colors.grey[800] : Colors.white,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -333,11 +323,11 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     // 订阅按钮
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 52,
                       child: ElevatedButton(
                         onPressed: () {
                           showPurchaseDialog(context, plan, t, ref);
@@ -345,9 +335,10 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: gradientColors[0],
                           foregroundColor: Colors.white,
-                          elevation: 0,
+                          elevation: 2,
+                          shadowColor: gradientColors[0].withOpacity(0.4),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                         ),
                         child: Row(
@@ -356,14 +347,15 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                             Text(
                               t.purchase.subscribe,
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             const Icon(
                               FluentIcons.arrow_right_24_filled,
-                              size: 18,
+                              size: 20,
                             ),
                           ],
                         ),
@@ -385,28 +377,28 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: lines.map((line) {
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: const EdgeInsets.only(top: 6),
-                width: 5,
-                height: 5,
+                margin: const EdgeInsets.only(top: 7),
+                width: 6,
+                height: 6,
                 decoration: BoxDecoration(
                   color: Colors.blue[400],
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   line.trim(),
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 14.5,
                     fontWeight: FontWeight.w400,
-                    height: 1.4,
-                    letterSpacing: 0.1,
+                    height: 1.5,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),

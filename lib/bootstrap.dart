@@ -38,8 +38,7 @@ Future<void> lazyBootstrap(
 
   LoggerController.preInit();
   FlutterError.onError = Logger.logFlutterError;
-  WidgetsBinding.instance.platformDispatcher.onError =
-      Logger.logPlatformDispatcherError;
+  WidgetsBinding.instance.platformDispatcher.onError = Logger.logPlatformDispatcherError;
   final userService = UserService();
   final stopWatch = Stopwatch()..start();
 
@@ -104,14 +103,11 @@ Future<void> lazyBootstrap(
     () => container.read(sharedPreferencesProvider.future),
   );
 
-  final enableAnalytics =
-      await container.read(analyticsControllerProvider.future);
+  final enableAnalytics = await container.read(analyticsControllerProvider.future);
   if (enableAnalytics) {
     await _init(
       "analytics",
-      () => container
-          .read(analyticsControllerProvider.notifier)
-          .enableAnalytics(),
+      () => container.read(analyticsControllerProvider.notifier).enableAnalytics(),
     );
   }
 
@@ -120,14 +116,26 @@ Future<void> lazyBootstrap(
     () async {
       try {
         await PreferencesMigration(
-          sharedPreferences:
-              container.read(sharedPreferencesProvider).requireValue,
+          sharedPreferences: container.read(sharedPreferencesProvider).requireValue,
         ).migrate();
       } catch (e, stackTrace) {
         Logger.bootstrap.error("preferences migration failed", e, stackTrace);
         if (env == Environment.dev) rethrow;
-        Logger.bootstrap.info("clearing preferences");
-        await container.read(sharedPreferencesProvider).requireValue.clear();
+        Logger.bootstrap.info("clearing preferences (except auth_token)");
+        // 保存 auth_token 和登录相关信息
+        final prefs = container.read(sharedPreferencesProvider).requireValue;
+        final authToken = prefs.getString('auth_token');
+        final savedEmail = prefs.getString('saved_email');
+        final savedPassword = prefs.getString('saved_email_password');
+        final isRememberMe = prefs.getBool('is_remember_me');
+
+        await prefs.clear();
+
+        // 恢复 auth_token 和登录相关信息
+        if (authToken != null) await prefs.setString('auth_token', authToken);
+        if (savedEmail != null) await prefs.setString('saved_email', savedEmail);
+        if (savedPassword != null) await prefs.setString('saved_email_password', savedPassword);
+        if (isRememberMe != null) await prefs.setBool('is_remember_me', isRememberMe);
       }
     },
   );
@@ -141,8 +149,7 @@ Future<void> lazyBootstrap(
     );
 
     final silentStart = container.read(Preferences.silentStart);
-    Logger.bootstrap
-        .debug("silent start [${silentStart ? "Enabled" : "Disabled"}]");
+    Logger.bootstrap.debug("silent start [${silentStart ? "Enabled" : "Disabled"}]");
     if (!silentStart) {
       await container.read(windowNotifierProvider.notifier).open(focus: false);
     } else {
@@ -217,13 +224,10 @@ Future<T> _init<T>(
 }) async {
   final stopWatch = Stopwatch()..start();
   Logger.bootstrap.info("initializing [$name]");
-  Future<T> func() => timeout != null
-      ? initializer().timeout(Duration(milliseconds: timeout))
-      : initializer();
+  Future<T> func() => timeout != null ? initializer().timeout(Duration(milliseconds: timeout)) : initializer();
   try {
     final result = await func();
-    Logger.bootstrap
-        .debug("[$name] initialized in ${stopWatch.elapsedMilliseconds}ms");
+    Logger.bootstrap.debug("[$name] initialized in ${stopWatch.elapsedMilliseconds}ms");
     return result;
   } catch (e, stackTrace) {
     Logger.bootstrap.error("[$name] error initializing", e, stackTrace);

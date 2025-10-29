@@ -24,10 +24,13 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> sendVerificationCode(String email) async {
-    return await _httpService.postRequest(
-      "/api/v1/passport/comm/sendEmailVerify",
-      {'email': email},
+  Future<Map<String, dynamic>> sendVerificationCode(String email, {String tag = 'register'}) async {
+    return await _httpService.postFormRequest(
+      "/apiv2/clickPass/sendEmailByHaHa",
+      {
+        'email': email,
+        'tag': tag,
+      },
     );
   }
 

@@ -55,6 +55,16 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
+
+    // 如果是手机登录模式，清空输入框
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_isPhoneMode) {
+        final loginViewModel = ref.read(loginViewModelProvider);
+        loginViewModel.usernameController.clear();
+        loginViewModel.passwordController.clear();
+      }
+    });
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -553,8 +563,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                   t,
                   isDark,
                 ),
-                const SizedBox(height: 28),
-                _buildFooterLinks(context, t, isDark),
+                // 只在邮箱登录模式显示忘记密码和注册链接
+                if (!_isPhoneMode) ...[
+                  const SizedBox(height: 28),
+                  _buildFooterLinks(context, t, isDark),
+                ],
               ],
             ),
           ),
@@ -582,9 +595,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
               _isPhoneMode,
               () async {
                 if (_isPhoneMode) return;
+                final loginViewModel = ref.read(loginViewModelProvider);
                 await _switchAnimationController.reverse();
                 setState(() {
                   _isPhoneMode = true;
+                  // 切换到手机登录时清空输入框
+                  loginViewModel.usernameController.clear();
+                  loginViewModel.passwordController.clear();
                 });
                 _switchAnimationController.forward();
               },
@@ -598,10 +615,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
               !_isPhoneMode,
               () async {
                 if (!_isPhoneMode) return;
+                final loginViewModel = ref.read(loginViewModelProvider);
                 await _switchAnimationController.reverse();
                 setState(() {
                   _isPhoneMode = false;
                 });
+                // 切换到邮箱登录时加载保存的账号密码
+                loginViewModel.loadEmailCredentials();
                 _switchAnimationController.forward();
               },
             ),
@@ -675,76 +695,103 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
     LoginViewModel loginViewModel,
     bool isDark,
   ) {
-    return TextFormField(
-      controller: loginViewModel.usernameController,
-      keyboardType: TextInputType.phone,
-      style: const TextStyle(
-        color: Color(0xFF0F172A),
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-      ),
-      decoration: InputDecoration(
-        labelText: '手机号',
-        labelStyle: const TextStyle(
-          color: Color(0xFF64748B),
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: loginViewModel.usernameController,
+          keyboardType: TextInputType.phone,
+          style: const TextStyle(
+            color: Color(0xFF0F172A),
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+          decoration: InputDecoration(
+            labelText: '手机号',
+            labelStyle: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: const Icon(
+              Icons.phone_android_outlined,
+              color: Color(0xFF0EA5E9),
+              size: 20,
+            ),
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFFE2E8F0),
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFF0EA5E9),
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFFEF4444),
+                width: 1.5,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(
+                color: Color(0xFFEF4444),
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFFEF4444),
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return '请输入手机号';
+            }
+            if (!RegExp(r'^1[3-9]\d{9}$').hasMatch(value)) {
+              return '请输入有效的手机号';
+            }
+            return null;
+          },
         ),
-        prefixIcon: const Icon(
-          Icons.phone_android_outlined,
-          color: Color(0xFF0EA5E9),
-          size: 20,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
-            width: 1.5,
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 14,
+                color: const Color(0xFF0EA5E9).withOpacity(0.8),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '如果手机号未注册将会自动注册',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: const Color(0xFF64748B).withOpacity(0.9),
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
           ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF0EA5E9),
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 2,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        errorStyle: const TextStyle(
-          fontSize: 12,
-          color: Color(0xFFEF4444),
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return '请输入手机号';
-        }
-        if (!RegExp(r'^1[3-9]\d{9}$').hasMatch(value)) {
-          return '请输入有效的手机号';
-        }
-        return null;
-      },
+      ],
     );
   }
 

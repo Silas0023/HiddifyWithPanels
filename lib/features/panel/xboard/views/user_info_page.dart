@@ -1,10 +1,12 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
-import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
+// import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
-import 'package:hiddify/features/panel/xboard/views/components/user_info/account_balance_card.dart';
-import 'package:hiddify/features/panel/xboard/views/components/user_info/invite_code_section.dart';
+// 隐藏余额和佣金功能
+// import 'package:hiddify/features/panel/xboard/views/components/user_info/account_balance_card.dart';
+// 隐藏邀请码功能
+// import 'package:hiddify/features/panel/xboard/views/components/user_info/invite_code_section.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/reset_subscription_button.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/traffic_chart_card.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/user_info_card.dart';
@@ -26,11 +28,11 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
   }
 
   void _refreshData() {
-    // 刷新用户信息和邀请码列表
+    // 刷新用户信息
     // ignore: unused_result
     ref.refresh(userTokenInfoProvider);
-    // ignore: unused_result
-    ref.refresh(inviteCodesProvider);
+    // 不再需要刷新邀请码列表
+    // ref.refresh(inviteCodesProvider);
   }
 
   @override
@@ -63,11 +65,8 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
         ],
       ),
       body: FutureBuilder(
-        // 等待所有需要的数据加载完毕再渲染视图
-        future: Future.wait([
-          ref.watch(userTokenInfoProvider.future),
-          ref.watch(inviteCodesProvider.future),
-        ]),
+        // 只加载用户信息
+        future: ref.watch(userTokenInfoProvider.future),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             // 显示加载指示器
@@ -80,7 +79,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    t.general.addToClipboard,
+                    '加载中...',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -117,8 +116,7 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
           }
 
           // 如果数据加载成功，显示整个视图
-          final data = snapshot.data!;
-          final userInfo = data[0] as UserInfo?;
+          final userInfo = snapshot.data;
 
           // 如果没有用户信息，显示错误
           if (userInfo == null) {
@@ -152,11 +150,14 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
                     t: t,
                   ),
                   const SizedBox(height: 16),
-                  const AccountBalanceCard(),
-                  const SizedBox(height: 16),
-                  const InviteCodeSection(),
-                  const SizedBox(height: 16),
-                  const ResetSubscriptionButton(),
+                  // 隐藏余额和佣金卡片
+                  // const AccountBalanceCard(),
+                  // const SizedBox(height: 16),
+                  // 隐藏邀请码部分
+                  // const InviteCodeSection(),
+                  // const SizedBox(height: 16),
+                  // 隐藏重置订阅按钮
+                  // const ResetSubscriptionButton(),
                   const SizedBox(height: 32),
                 ],
               ),

@@ -15,6 +15,7 @@ import 'package:hiddify/features/panel/xboard/views/login_view.dart';
 import 'package:hiddify/features/panel/xboard/views/purchase_page.dart';
 import 'package:hiddify/features/panel/xboard/views/register_view.dart';
 import 'package:hiddify/features/panel/xboard/views/user_info_page.dart';
+import 'package:hiddify/features/customer_support/customer_support_page.dart';
 
 import 'package:hiddify/features/per_app_proxy/overview/per_app_proxy_page.dart';
 import 'package:hiddify/features/profile/add/add_profile_modal.dart';
@@ -517,5 +518,24 @@ class AboutRoute extends GoRouteData {
       );
     }
     return const NoTransitionPage(name: name, child: AboutPage());
+  }
+}
+
+// 定义客服支持路由
+@TypedGoRoute<CustomerSupportRoute>(
+  path: "/customer-support",
+  name: CustomerSupportRoute.name,
+)
+class CustomerSupportRoute extends GoRouteData {
+  const CustomerSupportRoute();
+  static const name = "CustomerSupport";
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const MaterialPage(
+      fullscreenDialog: true,
+      name: name,
+      child: CustomerSupportPage(),
+    );
   }
 }

@@ -110,9 +110,8 @@ class ProfileTile extends HookConsumerWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         shadowColor: Colors.transparent,
-        child: IntrinsicHeight(
-          child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             if (profile is RemoteProfileEntity || !isMain) ...[
               SizedBox(
@@ -214,7 +213,6 @@ class ProfileTile extends HookConsumerWidget {
               ),
             ),
           ],
-        ),
         ),
       ),
     );

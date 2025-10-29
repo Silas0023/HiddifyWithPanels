@@ -459,7 +459,36 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with TickerProvider
                   ),
                 )
               : TextButton(
-                  onPressed: () => registerViewModel.sendVerificationCode(context),
+                  onPressed: () {
+                    final email = registerViewModel.emailController.text.trim();
+                    if (email.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('请输入邮箱'),
+                          backgroundColor: const Color(0xFFEF4444),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('请输入有效的邮箱地址'),
+                          backgroundColor: const Color(0xFFEF4444),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    registerViewModel.sendVerificationCode(context);
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF0EA5E9),
                     padding: const EdgeInsets.symmetric(horizontal: 12),

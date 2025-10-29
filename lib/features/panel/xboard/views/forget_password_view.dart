@@ -409,7 +409,38 @@ class _ForgetPasswordPageState extends ConsumerState<ForgetPasswordPage> with Ti
                   ),
                 )
               : TextButton(
-                  onPressed: viewModel.isCountingDown ? null : viewModel.sendVerificationCode,
+                  onPressed: viewModel.isCountingDown
+                      ? null
+                      : () {
+                          final email = viewModel.emailController.text.trim();
+                          if (email.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('请输入邮箱'),
+                                backgroundColor: const Color(0xFFEF4444),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('请输入有效的邮箱地址'),
+                                backgroundColor: const Color(0xFFEF4444),
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          viewModel.sendVerificationCode();
+                        },
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF0EA5E9),
                     disabledForegroundColor: const Color(0xFF94A3B8),

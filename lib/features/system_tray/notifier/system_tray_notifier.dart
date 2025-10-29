@@ -5,13 +5,13 @@ import 'package:flutter/widgets.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/constants.dart';
 import 'package:hiddify/core/router/router.dart';
-import 'package:hiddify/features/config_option/data/config_option_repository.dart';
+// import 'package:hiddify/features/config_option/data/config_option_repository.dart'; // 隐藏服务模式功能后不再需要
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/features/window/notifier/window_notifier.dart';
 import 'package:hiddify/gen/assets.gen.dart';
-import 'package:hiddify/singbox/model/singbox_config_enum.dart';
+// import 'package:hiddify/singbox/model/singbox_config_enum.dart'; // 隐藏服务模式功能后不再需要
 import 'package:hiddify/utils/utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -39,7 +39,7 @@ class SystemTrayNotifier extends _$SystemTrayNotifier with AppLogger {
     final t = ref.watch(translationsProvider);
 
     var tooltip = Constants.appName;
-    final serviceMode = ref.watch(ConfigOptions.serviceMode);
+    // final serviceMode = ref.watch(ConfigOptions.serviceMode); // 隐藏服务模式功能后不再需要
     if (connection == Disconnected()) {
       setIcon(connection);
     } else if (newConnectionStatus) {
@@ -79,40 +79,41 @@ class SystemTrayNotifier extends _$SystemTrayNotifier with AppLogger {
             await ref.read(windowNotifierProvider.notifier).open();
           },
         ),
-        MenuItem.separator(),
-        MenuItem.checkbox(
-          label: switch (connection) {
-            Disconnected() => t.tray.status.connect,
-            Connecting() => t.tray.status.connecting,
-            Connected() => t.tray.status.disconnect,
-            Disconnecting() => t.tray.status.disconnecting,
-          },
-          // checked: connection.isConnected,
-          checked: false,
-          disabled: connection.isSwitching,
-          onClick: (_) async {
-            await ref.read(connectionNotifierProvider.notifier).toggleConnection();
-          },
-        ),
-        MenuItem.separator(),
-        MenuItem(
-          label: t.config.serviceMode,
-          icon: Assets.images.trayIconIco,
-          disabled: true,
-        ),
-
-        ...ServiceMode.values.map(
-          (e) => MenuItem.checkbox(
-            checked: e == serviceMode,
-            key: e.name,
-            label: e.present(t),
-            onClick: (menuItem) async {
-              final newMode = ServiceMode.values.byName(menuItem.key!);
-              loggy.debug("switching service mode: [$newMode]");
-              await ref.read(ConfigOptions.serviceMode.notifier).update(newMode);
-            },
-          ),
-        ),
+        // 隐藏"连接"菜单项
+        // MenuItem.separator(),
+        // MenuItem.checkbox(
+        //   label: switch (connection) {
+        //     Disconnected() => t.tray.status.connect,
+        //     Connecting() => t.tray.status.connecting,
+        //     Connected() => t.tray.status.disconnect,
+        //     Disconnecting() => t.tray.status.disconnecting,
+        //   },
+        //   // checked: connection.isConnected,
+        //   checked: false,
+        //   disabled: connection.isSwitching,
+        //   onClick: (_) async {
+        //     await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+        //   },
+        // ),
+        // 隐藏"服务模式"部分（仅代理、系统代理、VPN选项）
+        // MenuItem.separator(),
+        // MenuItem(
+        //   label: t.config.serviceMode,
+        //   icon: Assets.images.trayIconIco,
+        //   disabled: true,
+        // ),
+        // ...ServiceMode.values.map(
+        //   (e) => MenuItem.checkbox(
+        //     checked: e == serviceMode,
+        //     key: e.name,
+        //     label: e.present(t),
+        //     onClick: (menuItem) async {
+        //       final newMode = ServiceMode.values.byName(menuItem.key!);
+        //       loggy.debug("switching service mode: [$newMode]");
+        //       await ref.read(ConfigOptions.serviceMode.notifier).update(newMode);
+        //     },
+        //   ),
+        // ),
 
         // MenuItem.submenu(
         //   label: t.tray.open,

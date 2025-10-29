@@ -137,10 +137,12 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
     bool markAsActive = false,
     CancelToken? cancelToken,
   }) {
+    print('[ProfileRepository] addByUrl 被调用，URL: $url');
     return exceptionHandler(
       () async {
         final existingProfile = await profileDataSource.getByUrl(url).then((value) => value?.toEntity());
         if (existingProfile case RemoteProfileEntity()) {
+          print('[ProfileRepository] 发现相同URL的配置文件已存在，准备更新');
           loggy.info("profile with same url already exists, updating");
           final baseProfile = markAsActive ? existingProfile.copyWith(active: true) : existingProfile;
           return updateSubscription(
@@ -149,14 +151,20 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
           ).run();
         }
 
+        print('[ProfileRepository] 配置文件不存在，准备获取新配置');
         final profileId = const Uuid().v4();
+        print('[ProfileRepository] 生成新的 profileId: $profileId');
         return fetch(url, profileId, cancelToken: cancelToken)
             .flatMap(
               (profile) => TaskEither(
                 () async {
-                  await profileDataSource.insert(
-                    profile.copyWith(id: profileId, active: markAsActive).toEntry(),
-                  );
+                  final finalProfile = profile.copyWith(id: profileId, active: markAsActive);
+                  print('[ProfileRepository] 准备插入配置文件到数据库');
+                  print('[ProfileRepository] 插入的 profile.id: ${finalProfile.id}');
+                  print('[ProfileRepository] 插入的 profile.url: ${finalProfile.url}');
+                  print('[ProfileRepository] 插入的 profile.name: ${finalProfile.name}');
+                  await profileDataSource.insert(finalProfile.toEntry());
+                  print('[ProfileRepository] 配置文件已成功插入数据库');
                   return right(unit);
                 },
               ),
@@ -390,6 +398,9 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
     String fileName, {
     CancelToken? cancelToken,
   }) {
+    print('[ProfileRepository] fetch 方法被调用');
+    print('[ProfileRepository] fetch URL: $url');
+    print('[ProfileRepository] fetch fileName: $fileName');
     return TaskEither(
       () async {
         final file = profilePathResolver.file(fileName);
@@ -398,17 +409,23 @@ class ProfileRepositoryImpl with ExceptionHandler, InfraLogger implements Profil
         try {
           final configs = await configOptionRepository.getConfigOptions();
 
+          print('[ProfileRepository] 开始下载配置文件: ${url.trim()}');
           final response = await httpClient.download(
             url.trim(),
             tempFile.path,
             cancelToken: cancelToken,
             userAgent: configs.useXrayCoreWhenPossible ? "v2rayNG/1.8.23" : null,
           );
+          print('[ProfileRepository] 配置文件下载完成');
           final headers = await _populateHeaders(response.headers.map, tempFile.path);
+          print('[ProfileRepository] headers 处理完成: $headers');
           return await validateConfig(file.path, tempFile.path, false)
               .andThen(
                 () => TaskEither(() async {
+                  print('[ProfileRepository] 开始解析配置文件，URL: $url');
                   final profile = ProfileParser.parse(url, headers);
+                  print('[ProfileRepository] 配置文件解析完成');
+                  print('[ProfileRepository] 最终存储的 profile.url: ${profile.url}');
                   return right(profile);
                 }),
               )
