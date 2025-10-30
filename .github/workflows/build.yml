@@ -416,15 +416,25 @@ jobs:
 
       - name: Setup dependencies
         run: |
-          make macos-install-dependencies
+          brew install create-dmg tree
+          npm install -g appdmg
+          dart pub global activate flutter_distributor
 
       - name: Prepare for macOS
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
           make macos-prepare
           tree
 
       - name: Build macOS
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          which flutter_distributor || echo "flutter_distributor not in PATH"
+          flutter_distributor --version || echo "flutter_distributor command failed"
           make macos-release
 
       - name: Copy to out macOS
