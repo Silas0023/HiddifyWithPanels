@@ -3,12 +3,17 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
+import 'package:hiddify/core/router/app_router.dart';
+import 'package:hiddify/core/router/routes.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
+import 'package:hiddify/features/panel/xboard/services/subscription.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/dialog_viewmodel/purchase_details_viewmodel.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/dialog_viewmodel/purchase_details_viewmodel_provider.dart';
-import 'package:hiddify/features/panel/xboard/views/components/dialog/payment_methods_dialog.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/dialog_viewmodel/payment_methods_viewmodel.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/dialog_viewmodel/payment_methods_viewmodel_provider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 void showPurchaseDialog(
@@ -377,19 +382,152 @@ class _PurchaseDetailsDialogState extends ConsumerState<PurchaseDetailsDialog> {
                                   final paymentMethods =
                                       await viewModel.handleSubscribe();
                                   if (paymentMethods.isNotEmpty) {
-                                    // 显示支付方式对话框
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return PaymentMethodsDialog(
-                                          tradeNo: viewModel.tradeNo!,
-                                          paymentMethods: paymentMethods,
-                                          totalAmount: viewModel.selectedPrice!,
-                                          t: widget.t,
-                                          ref: widget.ref,
+                                    // 关闭购买详情对话框
+                                    Navigator.of(context).pop();
+
+                                    // 直接使用第一个支付方式打开支付页面
+                                    final firstPaymentMethod = paymentMethods[0] as Map<String, dynamic>;
+
+                                    // 获取 ViewModel 并直接触发支付
+                                    final paymentParams = PaymentMethodsViewModelParams(
+                                      tradeNo: viewModel.tradeNo!,
+                                      totalAmount: viewModel.selectedPrice!,
+                                      ref: widget.ref,
+                                      onPaymentSuccess: () async {
+                                        // 使用全局 rootNavigatorKey 获取有效的 context
+                                        final navigatorContext = rootNavigatorKey.currentContext;
+                                        if (navigatorContext == null) {
+                                          if (kDebugMode) {
+                                            print('[PaymentSuccess] 无法获取有效的 context');
+                                          }
+                                          return;
+                                        }
+
+                                        try {
+                                          // 更新订阅（会获取新订阅链接、删除旧订阅、添加新订阅并设置为 activeProfile）
+                                          if (kDebugMode) {
+                                            print('[PaymentSuccess] 开始更新订阅配置...');
+                                          }
+
+                                          await Subscription.updateSubscription(navigatorContext, widget.ref);
+
+                                          if (kDebugMode) {
+                                            print('[PaymentSuccess] 订阅配置更新完成，activeProfile 已设置');
+                                          }
+                                        } catch (e) {
+                                          if (kDebugMode) {
+                                            print('[PaymentSuccess] 更新订阅配置失败: $e');
+                                          }
+                                          // 即使订阅更新失败，也继续显示成功提示，因为用户已经购买成功
+                                        }
+
+                                        // 显示购买成功对话框，引导用户前往首页连接VPN
+                                        await showDialog(
+                                          context: navigatorContext,
+                                          barrierDismissible: false,
+                                          builder: (dialogContext) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            content: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // 成功图标
+                                                Container(
+                                                  width: 80,
+                                                  height: 80,
+                                                  decoration: BoxDecoration(
+                                                    gradient: const LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                      colors: [
+                                                        Color(0xFF10B981),
+                                                        Color(0xFF059669),
+                                                      ],
+                                                    ),
+                                                    shape: BoxShape.circle,
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: const Color(0xFF10B981).withOpacity(0.3),
+                                                        blurRadius: 20,
+                                                        offset: const Offset(0, 8),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: const Icon(
+                                                    FluentIcons.checkmark_circle_24_filled,
+                                                    color: Colors.white,
+                                                    size: 48,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 24),
+                                                // 标题
+                                                const Text(
+                                                  '购买成功！',
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 12),
+                                                // 描述
+                                                const Text(
+                                                  '订阅已激活，请前往首页连接VPN开始使用',
+                                                  textAlign: TextAlign.center,
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: Colors.black54,
+                                                    height: 1.5,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 24),
+                                                // 前往首页按钮
+                                                SizedBox(
+                                                  width: double.infinity,
+                                                  child: ElevatedButton(
+                                                    onPressed: () {
+                                                      Navigator.of(dialogContext).pop(); // 关闭成功对话框
+                                                      // 使用 go_router 跳转到首页
+                                                      const HomeRoute().go(navigatorContext);
+                                                    },
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: const Color(0xFF10B981),
+                                                      foregroundColor: Colors.white,
+                                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius: BorderRadius.circular(12),
+                                                      ),
+                                                      elevation: 0,
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(FluentIcons.home_24_filled, size: 20),
+                                                        SizedBox(width: 8),
+                                                        Text(
+                                                          '前往首页',
+                                                          style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         );
                                       },
                                     );
+
+                                    final paymentProvider = paymentMethodsViewModelProvider(paymentParams);
+                                    final paymentViewModel = widget.ref.read(paymentProvider);
+
+                                    // 直接调用支付处理
+                                    paymentViewModel.handlePayment(firstPaymentMethod);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

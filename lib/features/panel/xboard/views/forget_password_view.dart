@@ -396,68 +396,78 @@ class _ForgetPasswordPageState extends ConsumerState<ForgetPasswordPage> with Ti
         ),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 8),
-          child: viewModel.isCountingDown
-              ? Center(
+          child: viewModel.isSendingCode
+              ? const Center(
                   widthFactor: 1,
-                  child: Text(
-                    '${viewModel.countdownTime}秒',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF94A3B8),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0EA5E9)),
                     ),
                   ),
                 )
-              : TextButton(
-                  onPressed: viewModel.isCountingDown
-                      ? null
-                      : () {
-                          final email = viewModel.emailController.text.trim();
-                          if (email.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('请输入邮箱'),
-                                backgroundColor: const Color(0xFFEF4444),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+              : viewModel.isCountingDown
+                  ? Center(
+                      widthFactor: 1,
+                      child: Text(
+                        '${viewModel.countdownTime}秒',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: () {
+                        final email = viewModel.emailController.text.trim();
+                        if (email.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('请输入邮箱'),
+                              backgroundColor: const Color(0xFFEF4444),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            );
-                            return;
-                          }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('请输入有效的邮箱地址'),
-                                backgroundColor: const Color(0xFFEF4444),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                            ),
+                          );
+                          return;
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('请输入有效的邮箱地址'),
+                              backgroundColor: const Color(0xFFEF4444),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            );
-                            return;
-                          }
-                          viewModel.sendVerificationCode();
-                        },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF0EA5E9),
-                    disabledForegroundColor: const Color(0xFF94A3B8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    minimumSize: const Size(80, 36),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                            ),
+                          );
+                          return;
+                        }
+                        viewModel.sendVerificationCode();
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0EA5E9),
+                        disabledForegroundColor: const Color(0xFF94A3B8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        minimumSize: const Size(80, 36),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        t.forgetPassword.sendCode,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    t.forgetPassword.sendCode,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
         ),
         filled: true,
         fillColor: const Color(0xFFF8FAFC),

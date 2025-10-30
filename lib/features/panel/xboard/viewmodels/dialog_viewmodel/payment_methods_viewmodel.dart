@@ -6,12 +6,15 @@ import 'package:flutter/foundation.dart';
 import 'package:hiddify/features/panel/xboard/services/monitor_pay_status.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class PaymentMethodsViewModel extends ChangeNotifier {
   final String tradeNo;
   final double totalAmount;
   final VoidCallback onPaymentSuccess;
+  final WidgetRef ref;
   final PurchaseService _purchaseService = PurchaseService();
   MonitorPayStatus? _monitorPayStatus;
 
@@ -19,6 +22,7 @@ class PaymentMethodsViewModel extends ChangeNotifier {
     required this.tradeNo,
     required this.totalAmount,
     required this.onPaymentSuccess,
+    required this.ref,
   });
 
   @override
@@ -76,10 +80,23 @@ class PaymentMethodsViewModel extends ChangeNotifier {
     }
   }
 
-  void handlePaymentSuccess() {
+  void handlePaymentSuccess() async {
     if (kDebugMode) {
       print('订单已标记为已支付。');
     }
+
+    // 刷新用户信息（更新余额、套餐、到期时间等）
+    try {
+      await ref.read(userInfoViewModelProvider.notifier).refresh();
+      if (kDebugMode) {
+        print('用户信息已刷新');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('刷新用户信息失败: $e');
+      }
+    }
+
     onPaymentSuccess();
   }
 

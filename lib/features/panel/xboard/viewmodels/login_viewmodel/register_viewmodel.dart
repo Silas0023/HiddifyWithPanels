@@ -15,6 +15,9 @@ class RegisterViewModel extends ChangeNotifier {
   bool _isCountingDown = false;
   bool get isCountingDown => _isCountingDown;
 
+  bool _isSendingCode = false;
+  bool get isSendingCode => _isSendingCode;
+
   int _countdownTime = 60;
   int get countdownTime => _countdownTime;
 
@@ -31,31 +34,43 @@ class RegisterViewModel extends ChangeNotifier {
 
   Future<void> sendVerificationCode(BuildContext context) async {
     final email = emailController.text.trim();
-    _isCountingDown = true;
-    _countdownTime = 60;
+
+    _isSendingCode = true;
     notifyListeners();
 
     try {
       final response = await _authService.sendVerificationCode(email);
 
-      if (response["status"] == "success") {
-        _showSnackbar(context, "Verification code sent to $email");
+      _isSendingCode = false;
+      notifyListeners();
+
+      // 检查响应状态码是否为 200（成功）
+      if (response["status"] == 200) {
+        _showSnackbar(context, "验证码已发送到 $email");
+
+        // 只有在发送成功后才开始倒计时
+        _isCountingDown = true;
+        _countdownTime = 60;
+        notifyListeners();
+
+        // 倒计时逻辑
+        while (_countdownTime > 0) {
+          await Future.delayed(const Duration(seconds: 1));
+          _countdownTime--;
+          notifyListeners();
+        }
+
+        _isCountingDown = false;
+        notifyListeners();
       } else {
-        _showSnackbar(context, response["message"].toString());
+        // 发送失败，显示错误消息
+        _showSnackbar(context, response["message"]?.toString() ?? "发送失败");
       }
     } catch (e) {
-      _showSnackbar(context, "Error: $e");
-    }
-
-    // 倒计时逻辑
-    while (_countdownTime > 0) {
-      await Future.delayed(const Duration(seconds: 1));
-      _countdownTime--;
+      _isSendingCode = false;
       notifyListeners();
+      _showSnackbar(context, "发送失败: $e");
     }
-
-    _isCountingDown = false;
-    notifyListeners();
   }
 
   Future<void> register(BuildContext context) async {

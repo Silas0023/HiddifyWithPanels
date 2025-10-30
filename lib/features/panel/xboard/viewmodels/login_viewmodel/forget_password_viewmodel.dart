@@ -13,6 +13,9 @@ class ForgetPasswordViewModel extends ChangeNotifier {
   bool _isCountingDown = false;
   bool get isCountingDown => _isCountingDown;
 
+  bool _isSendingCode = false;
+  bool get isSendingCode => _isSendingCode;
+
   int _countdownTime = 60;
   int get countdownTime => _countdownTime;
 
@@ -28,34 +31,45 @@ class ForgetPasswordViewModel extends ChangeNotifier {
 
   Future<void> sendVerificationCode() async {
     final email = emailController.text.trim();
-    _isCountingDown = true;
-    _countdownTime = 60;
+
+    _isSendingCode = true;
     notifyListeners();
 
     try {
-      await _authService.sendVerificationCode(email, tag: 'forget');
+      final response = await _authService.sendVerificationCode(email, tag: 'forget');
 
-      // 只有发送成功后才开始倒计时
-      while (_countdownTime > 0) {
-        await Future.delayed(const Duration(seconds: 1));
-        _countdownTime--;
-        notifyListeners();
-      }
-    } catch (e) {
-      // 请求失败时，停止倒计时并允许重新发送
-      _isCountingDown = false;
-      _countdownTime = 60; // 重置倒计时时间
+      _isSendingCode = false;
       notifyListeners();
 
-      // 可以在这里记录错误或显示错误提示
+      // 检查响应状态码是否为 200（成功）
+      if (response["status"] == 200) {
+        // 只有在发送成功后才开始倒计时
+        _isCountingDown = true;
+        _countdownTime = 60;
+        notifyListeners();
+
+        while (_countdownTime > 0) {
+          await Future.delayed(const Duration(seconds: 1));
+          _countdownTime--;
+          notifyListeners();
+        }
+
+        _isCountingDown = false;
+        notifyListeners();
+      } else {
+        // 发送失败，显示错误信息
+        if (kDebugMode) {
+          print("发送验证码失败: ${response["message"]}");
+        }
+      }
+    } catch (e) {
+      _isSendingCode = false;
+      notifyListeners();
+      // 请求异常时，记录错误
       if (kDebugMode) {
-        print("发送验证码失败: $e");
+        print("发送验证码异常: $e");
       }
     }
-
-    // 请求成功或倒计时结束后，重置状态
-    _isCountingDown = false;
-    notifyListeners();
   }
 
 

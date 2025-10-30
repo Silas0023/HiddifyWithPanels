@@ -9,11 +9,13 @@ class PaymentMethodsViewModelParams {
   final String tradeNo;
   final double totalAmount;
   final VoidCallback onPaymentSuccess;
+  final WidgetRef ref; // 添加 ref 用于刷新用户信息
 
   PaymentMethodsViewModelParams({
     required this.tradeNo,
     required this.totalAmount,
     required this.onPaymentSuccess,
+    required this.ref,
   });
 }
 
@@ -23,5 +25,6 @@ final paymentMethodsViewModelProvider = ChangeNotifierProvider.autoDispose
     tradeNo: params.tradeNo,
     totalAmount: params.totalAmount,
     onPaymentSuccess: params.onPaymentSuccess,
+    ref: params.ref,
   ),
 );
