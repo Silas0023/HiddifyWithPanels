@@ -1,0 +1,57 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [ v, lankuai ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows app
+        run: flutter build windows --release --target lib/main_prod.dart
+
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup -y
+
+      - name: Install fastforge
+        run: dart pub global activate fastforge
+
+      - name: Build Windows installers
+        run: |
+          $env:PATH += ";$env:USERPROFILE\AppData\Local\Pub\Cache\bin"
+          fastforge package --platform windows --targets exe,msix
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/**/*.exe
+            dist/**/*.msix
+          retention-days: 30
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/**/*.exe
+            dist/**/*.msix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

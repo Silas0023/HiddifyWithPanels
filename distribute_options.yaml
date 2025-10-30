@@ -24,6 +24,20 @@ releases:
           build_args:
             target: lib/main_prod.dart
 
+      - name: release-macos-dmg
+        package:
+          platform: macos
+          target: dmg
+          build_args:
+            target: lib/main_prod.dart
+
+      - name: release-macos-pkg
+        package:
+          platform: macos
+          target: pkg
+          build_args:
+            target: lib/main_prod.dart
+
       - name: release-android-apk
         package:
           platform: android
