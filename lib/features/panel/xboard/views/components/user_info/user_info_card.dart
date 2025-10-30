@@ -1,18 +1,178 @@
 // views/user_info_card.dart
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
+import 'package:hiddify/core/router/app_router.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
 import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
+import 'package:hiddify/features/panel/xboard/services/subscription.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class UserInfoCard extends ConsumerWidget {
+class UserInfoCard extends ConsumerStatefulWidget {
   const UserInfoCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserInfoCard> createState() => _UserInfoCardState();
+}
+
+class _UserInfoCardState extends ConsumerState<UserInfoCard> {
+  bool _isRefreshing = false;
+
+  Future<void> _handleRefresh(BuildContext context, UserInfo oldUserInfo) async {
+    if (_isRefreshing) return;
+
+    if (!mounted) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      // 先刷新用户信息，获取最新数据
+      if (kDebugMode) {
+        print('[UserInfoCard] 开始刷新用户信息...');
+      }
+
+      // 在异步操作前保存 notifier 引用
+      final userInfoNotifier = ref.read(userInfoViewModelProvider.notifier);
+      await userInfoNotifier.refresh();
+
+      // 检查 widget 是否还存在
+      if (!mounted) return;
+
+      // 获取最新的用户信息
+      final latestUserInfo = ref.read(userInfoViewModelProvider).value;
+
+      if (latestUserInfo == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('无法获取用户信息'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // 检查最新的用户是否过期
+      if (latestUserInfo.isExpired) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('订阅已过期，请购买新套餐'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // 使用全局 context 进行订阅更新
+      final navigatorContext = rootNavigatorKey.currentContext;
+      if (navigatorContext == null) {
+        if (kDebugMode) {
+          print('[UserInfoCard] 无法获取有效的 context');
+        }
+        return;
+      }
+
+      if (kDebugMode) {
+        print('[UserInfoCard] 开始刷新订阅配置...');
+      }
+
+      // 检查 widget 是否还存在
+      if (!mounted) return;
+
+      // 更新订阅（会获取新订阅链接、删除旧订阅、添加新订阅并设置为 activeProfile）
+      try {
+        await Subscription.updateSubscription(navigatorContext, ref);
+
+        if (kDebugMode) {
+          print('[UserInfoCard] 订阅配置更新完成');
+        }
+
+        // 不显示成功提示，因为刷新按钮主要用于重新激活订阅配置
+        // 用户可以直接去首页查看是否激活成功
+      } on StateError catch (e, stackTrace) {
+        // 如果是 ref disposed 错误，直接忽略（widget 已被销毁）
+        final errorMsg = e.toString().toLowerCase();
+        final isDisposedError = errorMsg.contains('ref') || errorMsg.contains('disposed');
+
+        if (kDebugMode) {
+          if (isDisposedError) {
+            print('========== [UserInfoCard-StateError] Widget Disposed 错误（已忽略） ==========');
+            print('错误类型: ${e.runtimeType}');
+            print('错误信息: $e');
+            print('是否包含 "ref": ${errorMsg.contains('ref')}');
+            print('是否包含 "disposed": ${errorMsg.contains('disposed')}');
+            print('========================================');
+          } else {
+            print('========== [UserInfoCard-StateError] 订阅更新错误 ==========');
+            print('错误类型: ${e.runtimeType}');
+            print('错误信息: $e');
+            print('堆栈跟踪:');
+            print(stackTrace);
+            print('========================================');
+          }
+        }
+
+        if (isDisposedError) {
+          return;
+        }
+        // 其他 StateError 重新抛出
+        rethrow;
+      }
+
+    } catch (e, stackTrace) {
+      // 检查是否是 widget disposed 错误
+      final errorMsg = e.toString().toLowerCase();
+      final isDisposedError = errorMsg.contains('disposed') ||
+                              errorMsg.contains('bad state') ||
+                              (errorMsg.contains('cannot use') && errorMsg.contains('ref'));
+
+      if (kDebugMode) {
+        if (isDisposedError) {
+          print('========== [UserInfoCard] Widget Disposed 错误（已忽略） ==========');
+          print('错误类型: ${e.runtimeType}');
+          print('错误信息: $e');
+          print('是否包含 "disposed": ${errorMsg.contains('disposed')}');
+          print('是否包含 "bad state": ${errorMsg.contains('bad state')}');
+          print('是否包含 "cannot use" + "ref": ${errorMsg.contains('cannot use') && errorMsg.contains('ref')}');
+          print('========================================');
+        } else {
+          print('========== [UserInfoCard] 刷新订阅配置错误 ==========');
+          print('错误类型: ${e.runtimeType}');
+          print('错误信息: $e');
+          print('堆栈跟踪:');
+          print(stackTrace);
+          print('========================================');
+        }
+      }
+
+      // 只有在不是 disposed 错误且 widget 仍然存在时才显示错误提示
+      if (mounted && !isDisposedError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('刷新失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final userInfoAsync = ref.watch(userInfoViewModelProvider);
     final plansAsync = ref.watch(plansProvider);
     final t = ref.watch(translationsProvider);
@@ -113,7 +273,9 @@ class UserInfoCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          userInfo.email,
+                          userInfo.email.endsWith('@phone.com')
+                              ? userInfo.email.replaceAll('@phone.com', '')
+                              : userInfo.email,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -168,6 +330,34 @@ class UserInfoCard extends ConsumerWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // 刷新按钮
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: _isRefreshing
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              FluentIcons.arrow_sync_24_regular,
+                              color: theme.colorScheme.primary,
+                            ),
+                      onPressed: _isRefreshing
+                          ? null
+                          : () => _handleRefresh(context, userInfo),
+                      tooltip: '刷新订阅',
                     ),
                   ),
                 ],

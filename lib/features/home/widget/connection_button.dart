@@ -1,8 +1,10 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
+import 'package:hiddify/core/router/routes.dart';
 import 'package:hiddify/core/theme/theme_extensions.dart';
 import 'package:hiddify/core/widget/animated_text.dart';
 import 'package:hiddify/features/config_option/data/config_option_repository.dart';
@@ -10,6 +12,7 @@ import 'package:hiddify/features/config_option/notifier/config_option_notifier.d
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/connection/widget/experimental_feature_notice.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/gen/assets.gen.dart';
@@ -26,6 +29,7 @@ class ConnectionButton extends HookConsumerWidget {
     final connectionStatus = ref.watch(connectionNotifierProvider);
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final delay = activeProxy.valueOrNull?.urlTestDelay ?? 0;
+    final userInfoAsync = ref.watch(userInfoViewModelProvider);
 
     final requiresReconnect = ref.watch(configOptionNotifierProvider).valueOrNull;
     final today = DateTime.now();
@@ -53,14 +57,163 @@ class ConnectionButton extends HookConsumerWidget {
       return true;
     }
 
+    // 检查用户订阅是否过期
+    Future<bool> checkSubscriptionExpired() async {
+      final userInfo = userInfoAsync.valueOrNull;
+      if (userInfo == null) return false;
+
+      if (userInfo.isExpired) {
+        // 如果当前已连接，先断开连接
+        if (connectionStatus is AsyncData && connectionStatus.value is Connected) {
+          await ref.read(connectionNotifierProvider.notifier).toggleConnection();
+        }
+
+        // 显示提示弹窗
+        if (context.mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 警告图标
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFEF4444),
+                          Color(0xFFDC2626),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFEF4444).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      FluentIcons.warning_24_filled,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // 标题
+                  const Text(
+                    '订阅已过期',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // 描述
+                  const Text(
+                    '您的订阅已过期，需要购买新套餐才能继续使用VPN服务',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black54,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // 按钮
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                            const PurchaseRoute().push(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6366F1),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(FluentIcons.shopping_bag_24_filled, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                '购买套餐',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.grey[600],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            '取消',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return true; // 已过期
+      }
+      return false; // 未过期
+    }
+
     return _ConnectionButton(
       onTap: switch (connectionStatus) {
         AsyncData(value: Disconnected()) || AsyncError() => () async {
+            // 检查订阅是否过期
+            if (await checkSubscriptionExpired()) {
+              return;
+            }
             if (await showExperimentalNotice()) {
               return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
             }
           },
         AsyncData(value: Connected()) => () async {
+            // 检查订阅是否过期
+            if (await checkSubscriptionExpired()) {
+              return;
+            }
             if (requiresReconnect == true && await showExperimentalNotice()) {
               return await ref.read(connectionNotifierProvider.notifier).reconnect(await ref.read(activeProfileProvider.future));
             }
