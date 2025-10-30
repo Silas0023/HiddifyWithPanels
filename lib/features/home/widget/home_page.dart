@@ -75,12 +75,14 @@ class HomePage extends HookConsumerWidget {
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       const SliverToBoxAdapter(child: SubscriptionInfoCard()),
                       const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      const SliverToBoxAdapter(child: ActionButtonsRow()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
                       const SliverToBoxAdapter(
                         child: ConnectionButton(),
                       ),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      const SliverToBoxAdapter(child: ActionButtonsRow()),
+                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
                       const SliverToBoxAdapter(
                         child: ActiveProxyDelayIndicator(),
                       ),
