@@ -16,7 +16,7 @@ on:
 env:
   IS_GITHUB_ACTIONS: 1
   CHANNEL: "${{ inputs.channel }}"
-  FLUTTER_VERSION: '3.24.0'
+  FLUTTER_VERSION: '3.32.8'
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   TAG_NAME: "${{ inputs.tag-name }}"
   TARGET_NAME_apk: "Hiddify-Android"
