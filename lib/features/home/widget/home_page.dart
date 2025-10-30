@@ -7,8 +7,10 @@ import 'package:hiddify/core/model/failures.dart';
 import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/common/nested_app_bar.dart';
 import 'package:hiddify/features/home/widget/connection_button.dart';
+import 'package:hiddify/features/home/widget/action_buttons_row.dart';
 import 'package:hiddify/features/home/widget/empty_profiles_home_body.dart';
 import 'package:hiddify/features/home/widget/subscription_info_card.dart';
+import 'package:hiddify/features/panel/xboard/views/components/user_info/user_info_card.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/widget/profile_tile.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_delay_indicator.dart';
@@ -72,7 +74,9 @@ class HomePage extends HookConsumerWidget {
                       // ProfileTile(profile: profile, isMain: true),
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
                       const SliverToBoxAdapter(child: SubscriptionInfoCard()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      const SliverToBoxAdapter(child: ActionButtonsRow()),
+                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
                       const SliverToBoxAdapter(
                         child: ConnectionButton(),
                       ),
@@ -88,28 +92,134 @@ class HomePage extends HookConsumerWidget {
                 // 修改无活跃配置文件时的提示信息
                 AsyncData() => switch (hasAnyProfile) {
                     AsyncData(value: true) => const EmptyActiveProfileHomeBody(),
-                    _ => SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                t.home.noSubscriptionMsg,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // 导航到套餐购买页面
-                                  const PurchaseRoute().push(context);
-                                },
-                                child: Text(t.home.goToPurchasePage),
-                              ),
-                            ],
+                    _ => MultiSliver(
+                        children: [
+                          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                          // 用户信息卡片
+                          const SliverToBoxAdapter(child: SubscriptionInfoCard()),
+                          // const SliverToBoxAdapter(child: UserInfoCard()),
+                          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                          const SliverToBoxAdapter(
+                            child: ConnectionButton(),
                           ),
-                        ),
+                          // 无订阅提示卡片
+                          // SliverToBoxAdapter(
+                          //   child: Padding(
+                          //     padding: const EdgeInsets.symmetric(horizontal: 16),
+                          //     child: Container(
+                          //       decoration: BoxDecoration(
+                          //         gradient: LinearGradient(
+                          //           begin: Alignment.topLeft,
+                          //           end: Alignment.bottomRight,
+                          //           colors: isDark ? [const Color(0xFF1E293B), const Color(0xFF0F172A)] : [const Color(0xFFFFFFFF), const Color(0xFFF8FAFC)],
+                          //         ),
+                          //         borderRadius: BorderRadius.circular(16),
+                          //         border: Border.all(
+                          //           color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                          //         ),
+                          //         boxShadow: [
+                          //           BoxShadow(
+                          //             color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+                          //             blurRadius: 10,
+                          //             offset: const Offset(0, 4),
+                          //           ),
+                          //         ],
+                          //       ),
+                          //       padding: const EdgeInsets.all(24),
+                          //       child: Column(
+                          //         children: [
+                          //           // 图标
+                          //           Container(
+                          //             width: 80,
+                          //             height: 80,
+                          //             decoration: BoxDecoration(
+                          //               gradient: LinearGradient(
+                          //                 begin: Alignment.topLeft,
+                          //                 end: Alignment.bottomRight,
+                          //                 colors: [
+                          //                   const Color(0xFF6366F1).withOpacity(0.8),
+                          //                   const Color(0xFF8B5CF6).withOpacity(0.8),
+                          //                 ],
+                          //               ),
+                          //               shape: BoxShape.circle,
+                          //               boxShadow: [
+                          //                 BoxShadow(
+                          //                   color: const Color(0xFF6366F1).withOpacity(0.3),
+                          //                   blurRadius: 20,
+                          //                   offset: const Offset(0, 8),
+                          //                 ),
+                          //               ],
+                          //             ),
+                          //             child: const Icon(
+                          //               FluentIcons.rocket_24_filled,
+                          //               color: Colors.white,
+                          //               size: 40,
+                          //             ),
+                          //           ),
+                          //           const SizedBox(height: 20),
+                          //           // 标题
+                          //           Text(
+                          //             '开启加速之旅',
+                          //             style: TextStyle(
+                          //               fontSize: 22,
+                          //               fontWeight: FontWeight.bold,
+                          //               color: isDark ? Colors.white : Colors.black87,
+                          //             ),
+                          //           ),
+                          //           const SizedBox(height: 12),
+                          //           // 描述
+                          //           Text(
+                          //             t.home.noSubscriptionMsg,
+                          //             textAlign: TextAlign.center,
+                          //             style: TextStyle(
+                          //               fontSize: 15,
+                          //               color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          //               height: 1.5,
+                          //             ),
+                          //           ),
+                          //           const SizedBox(height: 24),
+                          //           // 按钮
+                          //           SizedBox(
+                          //             width: double.infinity,
+                          //             child: ElevatedButton(
+                          //               onPressed: () {
+                          //                 const PurchaseRoute().push(context);
+                          //               },
+                          //               style: ElevatedButton.styleFrom(
+                          //                 backgroundColor: const Color(0xFF6366F1),
+                          //                 foregroundColor: Colors.white,
+                          //                 padding: const EdgeInsets.symmetric(vertical: 16),
+                          //                 shape: RoundedRectangleBorder(
+                          //                   borderRadius: BorderRadius.circular(12),
+                          //                 ),
+                          //                 elevation: 0,
+                          //               ),
+                          //               child: Row(
+                          //                 mainAxisAlignment: MainAxisAlignment.center,
+                          //                 children: [
+                          //                   const Icon(FluentIcons.shopping_bag_24_filled, size: 20),
+                          //                   const SizedBox(width: 8),
+                          //                   Text(
+                          //                     t.home.goToPurchasePage,
+                          //                     style: const TextStyle(
+                          //                       fontSize: 16,
+                          //                       fontWeight: FontWeight.w600,
+                          //                     ),
+                          //                   ),
+                          //                 ],
+                          //               ),
+                          //             ),
+                          //           ),
+                          //         ],
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                          // 客服支持和更新配置按钮
+                          const SliverToBoxAdapter(child: ActionButtonsRow()),
+                          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                        ],
                       ),
                   },
                 AsyncError(:final error) => SliverErrorBodyPlaceholder(t.presentShortError(error)),

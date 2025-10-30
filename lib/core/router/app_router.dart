@@ -25,10 +25,11 @@ GoRouter router(RouterRef ref) {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/intro', // 初始路由为 IntroPage
+    initialLocation: '/splash', // 初始路由为启动页
     debugLogDiagnostics: true,
     routes: [
       if (useMobileRouter) $mobileWrapperRoute else $desktopWrapperRoute,
+      $splashRoute,
       $introRoute,
       $loginRoute,
       $registerRoute,
@@ -36,12 +37,18 @@ GoRouter router(RouterRef ref) {
     ],
     refreshListenable: notifier,
     redirect: (context, state) {
+      final isSplashPage = state.uri.toString() == const SplashRoute().location;
       final isIntroPage = state.uri.toString() == const IntroRoute().location;
       final isLoggingIn = state.uri.toString() == const LoginRoute().location;
       final isRegistering =
           state.uri.toString() == const RegisterRoute().location; // 检查注册路由
       final isForgettingPassword =
           state.uri.toString() == const ForgetPasswordRoute().location;
+
+      // 启动页不做重定向，让它自行处理导航
+      if (isSplashPage) {
+        return null;
+      }
 
       if (!hasSeenIntro) {
         // 如果用户还没看过 IntroPage，无论如何都跳转到 IntroPage

@@ -9,6 +9,7 @@ import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hiddify/features/log/overview/logs_overview_page.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/order_page.dart';
 import 'package:hiddify/features/app_center/app_center_page.dart';
+import 'package:hiddify/features/splash/splash_screen.dart';
 
 import 'package:hiddify/features/panel/xboard/views/forget_password_view.dart';
 import 'package:hiddify/features/panel/xboard/views/login_view.dart';
@@ -28,8 +29,7 @@ import 'package:hiddify/utils/utils.dart';
 
 part 'routes.g.dart';
 
-GlobalKey<NavigatorState>? dynamicRootKey =
-    useMobileRouter ? rootNavigatorKey : null;
+GlobalKey<NavigatorState>? dynamicRootKey = useMobileRouter ? rootNavigatorKey : null;
 
 @TypedShellRoute<MobileWrapperRoute>(
   routes: [
@@ -100,6 +100,10 @@ GlobalKey<NavigatorState>? dynamicRootKey =
     TypedGoRoute<UserInfoRoute>(
       path: "/user-info",
       name: UserInfoRoute.name,
+    ),
+    TypedGoRoute<CustomerSupportRoute>(
+      path: "/customer-support",
+      name: CustomerSupportRoute.name,
     ),
   ],
 )
@@ -176,6 +180,10 @@ class MobileWrapperRoute extends ShellRouteData {
       path: "/about",
       name: AboutRoute.name,
     ),
+    TypedGoRoute<CustomerSupportRoute>(
+      path: "/customer-support",
+      name: CustomerSupportRoute.name,
+    ),
   ],
 )
 class DesktopWrapperRoute extends ShellRouteData {
@@ -240,6 +248,22 @@ class ForgetPasswordRoute extends GoRouteData {
       fullscreenDialog: true,
       name: name,
       child: ForgetPasswordPage(), // 忘记密码页面的实现
+    );
+  }
+}
+
+// 启动页路由
+@TypedGoRoute<SplashRoute>(path: "/splash", name: SplashRoute.name)
+class SplashRoute extends GoRouteData {
+  const SplashRoute();
+  static const name = "Splash";
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const MaterialPage(
+      fullscreenDialog: true,
+      name: name,
+      child: SplashScreen(),
     );
   }
 }
@@ -374,8 +398,7 @@ class ProfilesOverviewRoute extends GoRouteData {
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return BottomSheetPage(
       name: name,
-      builder: (controller) =>
-          ProfilesOverviewModal(scrollController: controller),
+      builder: (controller) => ProfilesOverviewModal(scrollController: controller),
     );
   }
 }
@@ -522,10 +545,6 @@ class AboutRoute extends GoRouteData {
 }
 
 // 定义客服支持路由
-@TypedGoRoute<CustomerSupportRoute>(
-  path: "/customer-support",
-  name: CustomerSupportRoute.name,
-)
 class CustomerSupportRoute extends GoRouteData {
   const CustomerSupportRoute();
   static const name = "CustomerSupport";

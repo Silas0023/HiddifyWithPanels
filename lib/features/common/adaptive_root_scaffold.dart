@@ -8,13 +8,10 @@ import 'package:hiddify/features/panel/xboard/utils/logout_dialog.dart';
 import 'package:hiddify/features/stats/widget/side_bar_stats_overview.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-
-
 abstract interface class RootScaffold {
   static final stateKey = GlobalKey<ScaffoldState>();
 
-  static bool canShowDrawer(BuildContext context) =>
-      Breakpoints.small.isActive(context);
+  static bool canShowDrawer(BuildContext context) => Breakpoints.small.isActive(context);
 }
 
 class AdaptiveRootScaffold extends HookConsumerWidget {
@@ -122,18 +119,14 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
   final Widget? sidebarTrailing;
   final Widget body;
 
-  List<NavigationDestination> destinationsSlice((int, int?) range) =>
-      destinations.sublist(range.$1, range.$2);
+  List<NavigationDestination> destinationsSlice((int, int?) range) => destinations.sublist(range.$1, range.$2);
 
   int? selectedWithOffset((int, int?) range) {
     final index = selectedIndex - range.$1;
-    return index < 0 || (range.$2 != null && index > (range.$2! - 1))
-        ? null
-        : index;
+    return index < 0 || (range.$2 != null && index > (range.$2! - 1)) ? null : index;
   }
 
-  void selectWithOffset(int index, (int, int?) range) =>
-      onSelectedIndexChange(index + range.$1);
+  void selectWithOffset(int index, (int, int?) range) => onSelectedIndexChange(index + range.$1);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -145,11 +138,8 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
               child: NavigationRail(
                 extended: true,
                 selectedIndex: selectedWithOffset(drawerDestinationRange),
-                destinations: destinationsSlice(drawerDestinationRange)
-                    .map((dest) => AdaptiveScaffold.toRailDestination(dest))
-                    .toList(),
-                onDestinationSelected: (index) =>
-                    selectWithOffset(index, drawerDestinationRange),
+                destinations: destinationsSlice(drawerDestinationRange).map((dest) => AdaptiveScaffold.toRailDestination(dest)).toList(),
+                onDestinationSelected: (index) => selectWithOffset(index, drawerDestinationRange),
               ),
             )
           : null,
@@ -160,9 +150,7 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
               key: const Key('primaryNavigation'),
               builder: (_) => AdaptiveScaffold.standardNavigationRail(
                 selectedIndex: selectedIndex,
-                destinations: destinations
-                    .map((dest) => AdaptiveScaffold.toRailDestination(dest))
-                    .toList(),
+                destinations: destinations.map((dest) => AdaptiveScaffold.toRailDestination(dest)).toList(),
                 onDestinationSelected: onSelectedIndexChange,
               ),
             ),
@@ -171,9 +159,7 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
               builder: (_) => AdaptiveScaffold.standardNavigationRail(
                 extended: true,
                 selectedIndex: selectedIndex,
-                destinations: destinations
-                    .map((dest) => AdaptiveScaffold.toRailDestination(dest))
-                    .toList(),
+                destinations: destinations.map((dest) => AdaptiveScaffold.toRailDestination(dest)).toList(),
                 onDestinationSelected: onSelectedIndexChange,
                 trailing: sidebarTrailing,
               ),
@@ -196,8 +182,7 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
           ? NavigationBar(
               selectedIndex: selectedWithOffset(bottomDestinationRange) ?? 0,
               destinations: destinationsSlice(bottomDestinationRange),
-              onDestinationSelected: (index) =>
-                  selectWithOffset(index, bottomDestinationRange),
+              onDestinationSelected: (index) => selectWithOffset(index, bottomDestinationRange),
             )
           : null,
     );
