@@ -22,6 +22,30 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Download libcore for Windows
+        shell: pwsh
+        run: |
+          $coreVersion = "3.1.8"
+          $coreUrl = "https://github.com/hiddify/hiddify-next-core/releases/download/v$coreVersion/hiddify-core-windows-amd64.tar.gz"
+          Write-Host "Downloading libcore from: $coreUrl"
+
+          New-Item -ItemType Directory -Force -Path "libcore\bin"
+
+          Invoke-WebRequest -Uri $coreUrl -OutFile "libcore\hiddify-core-windows-amd64.tar.gz"
+          Write-Host "Downloaded libcore archive"
+
+          tar -xzf "libcore\hiddify-core-windows-amd64.tar.gz" -C "libcore\bin"
+          Write-Host "Extracted libcore"
+
+          Get-ChildItem "libcore\bin" | Format-Table Name, Length
+
+          if (Test-Path "libcore\bin\libcore.dll") {
+            Write-Host "✓ libcore.dll found"
+          } else {
+            Write-Host "✗ libcore.dll not found!"
+            exit 1
+          }
+
       - name: Build Windows app
         run: flutter build windows --release --target lib/main_prod.dart
 
