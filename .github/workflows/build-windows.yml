@@ -25,6 +25,19 @@ jobs:
       - name: Build Windows app
         run: flutter build windows --release --target lib/main_prod.dart
 
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          Write-Host "Checking build output..."
+          if (Test-Path "build\windows\x64\runner\Release\lankuai.exe") {
+            Write-Host "✓ lankuai.exe found"
+            Get-ChildItem "build\windows\x64\runner\Release\" | Format-Table Name, Length
+          } else {
+            Write-Host "✗ lankuai.exe not found!"
+            Get-ChildItem "build\windows\x64\runner\Release\" -ErrorAction SilentlyContinue | Format-Table Name, Length
+            exit 1
+          }
+
       - name: Get app version
         id: version
         shell: pwsh
@@ -37,9 +50,11 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.version.outputs.version }}"
-          $appName = "蓝快加速器-$version-windows"
+          $appName = "lankuai-$version-windows"
           New-Item -ItemType Directory -Force -Path dist
           Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "dist\$appName.zip" -Force
+          Write-Host "Created package: dist\$appName.zip"
+          Write-Host "Package size: $((Get-Item "dist\$appName.zip").Length / 1MB) MB"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
