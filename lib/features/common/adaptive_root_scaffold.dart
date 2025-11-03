@@ -54,10 +54,11 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
         icon: const Icon(FluentIcons.settings_20_filled),
         label: t.settings.pageTitle,
       ),
-      NavigationDestination(
-        icon: const Icon(FluentIcons.document_text_20_filled),
-        label: t.logs.pageTitle,
-      ),
+      // 隐藏日志菜单
+      // NavigationDestination(
+      //   icon: const Icon(FluentIcons.document_text_20_filled),
+      //   label: t.logs.pageTitle,
+      // ),
       // 隐藏关于菜单
       // NavigationDestination(
       //   icon: const Icon(FluentIcons.info_20_filled),
