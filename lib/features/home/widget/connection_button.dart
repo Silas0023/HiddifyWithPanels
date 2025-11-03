@@ -1,6 +1,6 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
@@ -96,7 +96,7 @@ class ConnectionButton extends HookConsumerWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFEF4444).withOpacity(0.3),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -225,6 +225,10 @@ class ConnectionButton extends HookConsumerWidget {
         AsyncData(value: Connected()) || AsyncData(value: Disconnected()) || AsyncError() => true,
         _ => false,
       },
+      isConnected: switch (connectionStatus) {
+        AsyncData(value: Connected()) => true,
+        _ => false,
+      },
       label: switch (connectionStatus) {
         AsyncData(value: Connected()) when requiresReconnect == true => t.connection.reconnect,
         AsyncData(value: Connected()) when delay <= 0 || delay >= 65000 => t.connection.connecting,
@@ -233,7 +237,7 @@ class ConnectionButton extends HookConsumerWidget {
       },
       buttonColor: switch (connectionStatus) {
         AsyncData(value: Connected()) when requiresReconnect == true => Colors.teal,
-        AsyncData(value: Connected()) when delay <= 0 || delay >= 65000 => Color.fromARGB(255, 185, 176, 103),
+        AsyncData(value: Connected()) when delay <= 0 || delay >= 65000 => const Color.fromARGB(255, 185, 176, 103),
         AsyncData(value: Connected()) => buttonTheme.connectedColor!,
         AsyncData(value: _) => buttonTheme.idleColor!,
         _ => Colors.red,
@@ -243,19 +247,17 @@ class ConnectionButton extends HookConsumerWidget {
         AsyncData(value: Connected()) => Assets.images.connectNorouz,
         AsyncData(value: _) => Assets.images.disconnectNorouz,
         _ => Assets.images.disconnectNorouz,
-        AsyncData(value: Disconnected()) || AsyncError() => Assets.images.disconnectNorouz,
-        AsyncData(value: Connected()) => Assets.images.connectNorouz,
-        _ => Assets.images.disconnectNorouz,
       },
       useImage: today.day >= 19 && today.day <= 23 && today.month == 3,
     );
   }
 }
 
-class _ConnectionButton extends StatelessWidget {
+class _ConnectionButton extends StatefulWidget {
   const _ConnectionButton({
     required this.onTap,
     required this.enabled,
+    required this.isConnected,
     required this.label,
     required this.buttonColor,
     required this.image,
@@ -264,93 +266,94 @@ class _ConnectionButton extends StatelessWidget {
 
   final VoidCallback onTap;
   final bool enabled;
+  final bool isConnected;
   final String label;
   final Color buttonColor;
   final AssetGenImage image;
   final bool useImage;
 
   @override
+  State<_ConnectionButton> createState() => _ConnectionButtonState();
+}
+
+class _ConnectionButtonState extends State<_ConnectionButton> with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_ConnectionButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 启动或停止脉冲动画
+    if (widget.isConnected && !_pulseController.isAnimating) {
+      _pulseController.repeat();
+    } else if (!widget.isConnected && _pulseController.isAnimating) {
+      _pulseController.stop();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isConnected = buttonColor != Colors.red &&
-                        buttonColor != const Color.fromARGB(255, 185, 176, 103) &&
-                        enabled;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Semantics(
           button: true,
-          enabled: enabled,
-          label: label,
-          child: Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: enabled
-                  ? [
-                      BoxShadow(
-                        blurRadius: 24,
-                        color: isConnected
-                            ? buttonColor.withOpacity(isDark ? 0.3 : 0.2)
-                            : (isDark ? Colors.black26 : Colors.black.withOpacity(0.08)),
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Material(
-              key: const ValueKey("home_connection_button"),
-              shape: const CircleBorder(),
-              color: isConnected
-                  ? buttonColor
-                  : isDark
-                      ? const Color(0xFF1E293B)
-                      : Colors.white,
-              child: InkWell(
-                onTap: enabled ? onTap : null,
-                splashColor: isConnected
-                    ? Colors.white.withOpacity(0.2)
-                    : buttonColor.withOpacity(0.1),
-                highlightColor: isConnected
-                    ? Colors.white.withOpacity(0.1)
-                    : buttonColor.withOpacity(0.05),
-                customBorder: const CircleBorder(),
-                child: Center(
-                  child: TweenAnimationBuilder(
-                    tween: ColorTween(end: buttonColor),
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    builder: (context, value, child) {
-                      if (useImage) {
-                        return Padding(
-                          padding: const EdgeInsets.all(36),
-                          child: image.image(
-                            filterQuality: FilterQuality.medium,
-                            opacity: enabled
-                                ? const AlwaysStoppedAnimation(1.0)
-                                : const AlwaysStoppedAnimation(0.5),
-                          ),
-                        );
-                      } else {
-                        return Icon(
-                          isConnected
-                              ? FluentIcons.shield_checkmark_24_filled
-                              : FluentIcons.power_24_filled,
-                          size: 56,
-                          color: isConnected
-                              ? Colors.white
-                              : (enabled
-                                  ? (isDark
-                                      ? Colors.white70
-                                      : const Color(0xFF64748B))
-                                  : (isDark ? Colors.white30 : Colors.black26)),
-                        );
-                      }
-                    },
-                  ),
-                ),
+          enabled: widget.enabled,
+          label: widget.label,
+          child: GestureDetector(
+            onTapDown: (_) {
+              if (widget.enabled) {
+                setState(() => _isPressed = true);
+                HapticFeedback.mediumImpact();
+              }
+            },
+            onTapUp: (_) {
+              if (widget.enabled) {
+                setState(() => _isPressed = false);
+                widget.onTap();
+              }
+            },
+            onTapCancel: () {
+              if (widget.enabled) {
+                setState(() => _isPressed = false);
+              }
+            },
+            child: AnimatedScale(
+              scale: _isPressed ? 0.95 : 1.0,
+              duration: Duration(milliseconds: _isPressed ? 100 : 400),
+              curve: _isPressed ? Curves.easeOut : Curves.elasticOut,
+              child: AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  final pulseValue = _pulseController.value;
+                  return _SplashStyleButton(
+                    size: 160,
+                    isConnected: widget.isConnected,
+                    enabled: widget.enabled,
+                    buttonColor: widget.buttonColor,
+                    isDark: isDark,
+                    pulseValue: pulseValue,
+                    useImage: widget.useImage,
+                    image: widget.image,
+                  );
+                },
               ),
             ),
           ),
@@ -358,17 +361,159 @@ class _ConnectionButton extends StatelessWidget {
         const Gap(24),
         ExcludeSemantics(
           child: AnimatedText(
-            label,
+            widget.label,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
               fontSize: 18,
-              color: enabled
+              color: widget.enabled
                   ? (isDark ? Colors.white : const Color(0xFF1E293B))
                   : (isDark ? Colors.white38 : Colors.black38),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SplashStyleButton extends StatelessWidget {
+  const _SplashStyleButton({
+    required this.size,
+    required this.isConnected,
+    required this.enabled,
+    required this.buttonColor,
+    required this.isDark,
+    required this.pulseValue,
+    required this.useImage,
+    required this.image,
+  });
+
+  final double size;
+  final bool isConnected;
+  final bool enabled;
+  final Color buttonColor;
+  final bool isDark;
+  final double pulseValue;
+  final bool useImage;
+  final AssetGenImage image;
+
+  @override
+  Widget build(BuildContext context) {
+    // 计算脉冲动画的透明度和模糊半径
+    final pulseOpacity = isConnected ? (0.6 + (0.3 * (1 - pulseValue))) : 0.3;
+    final pulseBlur = isConnected ? 35.0 + (15.0 * pulseValue) : 20.0;
+    final pulseSpread = isConnected ? 8.0 + (4.0 * pulseValue) : 2.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOutCubic,
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: _buildGradient(),
+        shape: BoxShape.circle,
+        boxShadow: [
+          // 强烈的彩色发光效果（已连接）或微弱阴影（未连接）
+          BoxShadow(
+            color: _getGlowColor().withValues(alpha: pulseOpacity),
+            blurRadius: pulseBlur,
+            spreadRadius: pulseSpread,
+            offset: Offset(0, enabled ? (isConnected ? 12 : 4) : 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: _buildIcon(),
+      ),
+    );
+  }
+
+  Color _getGlowColor() {
+    if (!enabled) {
+      return const Color(0xFF52525B);
+    }
+
+    if (isConnected) {
+      // 已连接：紫色混合发光
+      return const Color(0xFFb82bf7);
+    } else {
+      // 未连接：深紫色混合发光
+      return const Color(0xFF8f21c3);
+    }
+  }
+
+  LinearGradient _buildGradient() {
+    if (!enabled) {
+      // 禁用状态：优雅灰色渐变
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF52525B),
+          Color(0xFF3F3F46),
+        ],
+      );
+    }
+
+    if (isConnected) {
+      // 已连接：紫色渐变 - 亮紫到深紫
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFda22ff), // 亮紫色
+          Color(0xFF9733ee), // 深紫色
+        ],
+      );
+    } else {
+      // 未连接：深色版紫色渐变
+      return const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFa81bcc), // 深亮紫
+          Color(0xFF7628ba), // 更深紫
+        ],
+      );
+    }
+  }
+
+  Widget _buildIcon() {
+    if (useImage) {
+      return Padding(
+        padding: const EdgeInsets.all(36),
+        child: image.image(
+          opacity: enabled
+              ? const AlwaysStoppedAnimation(1.0)
+              : const AlwaysStoppedAnimation(0.5),
+        ),
+      );
+    }
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: isConnected ? 1.0 : 0.0),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
+      builder: (context, value, child) {
+        // 图标切换动画
+        final icon = isConnected
+            ? FluentIcons.shield_checkmark_24_filled
+            : FluentIcons.power_24_filled;
+
+        // 图标颜色：已连接纯白色，未连接半透明白色
+        final iconColor = enabled
+            ? (isConnected ? Colors.white : Colors.white.withValues(alpha: 0.7))
+            : Colors.white.withValues(alpha: 0.4);
+
+        return Transform.scale(
+          scale: 1.0 + (value * 0.1), // 连接时轻微放大
+          child: Icon(
+            icon,
+            size: 60,
+            color: iconColor,
+          ),
+        );
+      },
     );
   }
 }

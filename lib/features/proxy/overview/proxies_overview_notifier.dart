@@ -19,12 +19,10 @@ part 'proxies_overview_notifier.g.dart';
 
 enum ProxiesSort {
   unsorted,
-  name,
   delay;
 
   String present(TranslationsEn t) => switch (this) {
         ProxiesSort.unsorted => t.proxies.sortOptions.unsorted,
-        ProxiesSort.name => t.proxies.sortOptions.name,
         ProxiesSort.delay => t.proxies.sortOptions.delay,
       };
 }
@@ -91,11 +89,6 @@ class ProxiesOverviewNotifier extends _$ProxiesOverviewNotifier with AppLogger {
     final sortedProxies = <ProxyGroupEntity>[];
     for (final group in proxies) {
       final sortedItems = switch (sortBy) {
-        ProxiesSort.name => group.items.sortedWith((a, b) {
-            if (a.type.isGroup && !b.type.isGroup) return -1;
-            if (!a.type.isGroup && b.type.isGroup) return 1;
-            return a.tag.compareTo(b.tag);
-          }),
         ProxiesSort.delay => group.items.sortedWith((a, b) {
             if (a.type.isGroup && !b.type.isGroup) return -1;
             if (!a.type.isGroup && b.type.isGroup) return 1;

@@ -157,10 +157,10 @@
         "cancel": "取消"
     },
     "logout": {
-        "buttonText": "登出",
-        "confirmationMessage": "是否确定登出当前账号？",
+        "buttonText": "退出登录",
+        "confirmationMessage": "是否确定退出当前账号？",
         "cancelButton": "取消",
-        "confirmButton": "登出"
+        "confirmButton": "退出登录"
     },
     "login": {
         "welcome": "欢迎使用",
@@ -299,7 +299,7 @@
         }
     },
     "proxies": {
-        "pageTitle": "代理",
+        "pageTitle": "区域选择",
         "emptyProxiesMsg": "无可用的代理",
         "delayTestTooltip": "测试延迟",
         "sortTooltip": "对代理进行排序",
@@ -544,7 +544,7 @@
         "generateWarpConfig": "生成 WARP 配置文件",
         "missingWarpConfig": "WARP 配置文件缺失",
         "warpConfigGenerated": "WARP 配置已生成",
-        "pageTitle": "配置选项",
+        "pageTitle": "高级设置",
         "logLevel": "日志级别",
         "blockAds": "阻止广告",
         "resolveDestination": "解析目标地址",
@@ -603,7 +603,8 @@
     "window": {
         "hide": "隐藏",
         "close": "关闭",
-        "alertMessage": "隐藏或退出应用程序？"
+        "alertMessage": "隐藏或退出应用程序？",
+        "remember": "记住我的选择"
     },
     "appCenter": {
         "pageTitle": "应用中心",

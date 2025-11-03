@@ -225,8 +225,8 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.primaryContainer.withOpacity(0.3),
-              theme.colorScheme.secondaryContainer.withOpacity(0.2),
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
             ],
           ),
         ),
@@ -351,8 +351,8 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              theme.colorScheme.primaryContainer.withOpacity(0.3),
-              theme.colorScheme.secondaryContainer.withOpacity(0.2),
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              theme.colorScheme.secondaryContainer.withValues(alpha: 0.2),
             ],
           ),
         ),
@@ -367,7 +367,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -393,7 +393,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
+                        color: Colors.green.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.green, width: 1.5),
                       ),
@@ -407,7 +407,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'VPN配置已激活',
+                            '连接配置已激活',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -422,7 +422,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
+                        color: Colors.grey.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.grey, width: 1.5),
                       ),
@@ -436,7 +436,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'VPN配置未激活',
+                            '连接配置未激活',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -451,7 +451,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                   // 刷新按钮
                   Container(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: IconButton(
@@ -486,7 +486,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha:0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -530,7 +530,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: expiryColor.withOpacity(0.1),
+                        color: expiryColor.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: expiryColor),
                       ),
@@ -554,7 +554,7 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.purple.withOpacity(0.1),
+                        color: Colors.purple.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.purple),
                       ),
@@ -570,68 +570,258 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                   ],
                 ],
               ),
-              const SizedBox(height: 16),
-              // 流量使用进度条
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '流量使用',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.grey[300] : Colors.grey[700],
-                        ),
-                      ),
-                      Text(
-                        '${usagePercentage.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: usageColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: usagePercentage / 100,
-                      minHeight: 8,
-                      backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-                      valueColor: AlwaysStoppedAnimation<Color>(usageColor),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '已用: ${_formatBytes(userInfo.usedTraffic)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                      Text(
-                        '总计: ${_formatBytes(userInfo.transferEnable)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              const SizedBox(height: 12),
+              // 流量使用折叠面板
+              _TrafficCollapsibleSection(
+                userInfo: userInfo,
+                usageColor: usageColor,
+                isDark: isDark,
+                formatBytes: _formatBytes,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+// 流量使用折叠面板
+class _TrafficCollapsibleSection extends StatefulWidget {
+  final UserInfo userInfo;
+  final Color usageColor;
+  final bool isDark;
+  final String Function(double) formatBytes;
+
+  const _TrafficCollapsibleSection({
+    required this.userInfo,
+    required this.usageColor,
+    required this.isDark,
+    required this.formatBytes,
+  });
+
+  @override
+  State<_TrafficCollapsibleSection> createState() =>
+      _TrafficCollapsibleSectionState();
+}
+
+class _TrafficCollapsibleSectionState extends State<_TrafficCollapsibleSection>
+    with SingleTickerProviderStateMixin {
+  bool _isExpanded = false;
+  late AnimationController _animationController;
+  late Animation<double> _iconRotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _iconRotation = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpansion() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final usagePercentage = widget.userInfo.usagePercentage;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: widget.isDark
+            ? Colors.grey[850]!.withValues(alpha: 0.5)
+            : Colors.white.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: widget.isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
+        ),
+      ),
+      child: Column(
+        children: [
+          // 标题栏
+          InkWell(
+            onTap: _toggleExpansion,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  // 流量图标
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.usageColor.withValues(alpha: 0.2),
+                          widget.usageColor.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      FluentIcons.data_usage_24_filled,
+                      color: widget.usageColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // 标题
+                  Expanded(
+                    child: Text(
+                      '流量使用',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: widget.isDark ? Colors.grey[300] : Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  // 展开/折叠图标
+                  RotationTransition(
+                    turns: _iconRotation,
+                    child: Icon(
+                      FluentIcons.chevron_down_24_filled,
+                      color: widget.usageColor,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 可展开内容
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _isExpanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 进度条和百分比
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '使用进度',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: widget.isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '${usagePercentage.toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: widget.usageColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: usagePercentage / 100,
+                            minHeight: 8,
+                            backgroundColor: widget.isDark
+                                ? Colors.grey[800]
+                                : Colors.grey[200],
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              widget.usageColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // 流量详细信息
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildTrafficInfo(
+                              icon: FluentIcons.arrow_upload_16_regular,
+                              label: '已用',
+                              value: widget.formatBytes(widget.userInfo.usedTraffic),
+                            ),
+                            _buildTrafficInfo(
+                              icon: FluentIcons.database_16_regular,
+                              label: '总计',
+                              value: widget.formatBytes(widget.userInfo.transferEnable),
+                            ),
+                            _buildTrafficInfo(
+                              icon: FluentIcons.storage_16_regular,
+                              label: '剩余',
+                              value: widget.formatBytes(widget.userInfo.remainingTraffic),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrafficInfo({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: widget.usageColor,
+          size: 16,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: widget.isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: widget.isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }

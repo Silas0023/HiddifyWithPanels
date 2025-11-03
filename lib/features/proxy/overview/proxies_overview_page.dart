@@ -35,21 +35,75 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
         ),
       ),
       actions: [
-        PopupMenuButton<ProxiesSort>(
-          initialValue: sortBy,
-          onSelected: ref.read(proxiesSortNotifierProvider.notifier).update,
-          icon: const Icon(FluentIcons.arrow_sort_24_regular),
-          tooltip: t.proxies.sortTooltip,
-          itemBuilder: (context) {
-            return [
-              ...ProxiesSort.values.map(
-                (e) => PopupMenuItem(
-                  value: e,
-                  child: Text(e.present(t)),
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF6366F1).withValues(alpha: 0.15),
+                const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.3)
+                  : const Color(0xFF6366F1).withValues(alpha: 0.2),
+            ),
+          ),
+          child: PopupMenuButton<ProxiesSort>(
+            initialValue: sortBy,
+            onSelected: ref.read(proxiesSortNotifierProvider.notifier).update,
+            icon: const Icon(
+              FluentIcons.arrow_sort_24_filled,
+              color: Color(0xFF6366F1),
+            ),
+            tooltip: t.proxies.sortTooltip,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            itemBuilder: (context) {
+              return [
+                ...ProxiesSort.values.map(
+                  (e) => PopupMenuItem(
+                    value: e,
+                    child: Row(
+                      children: [
+                        Icon(
+                          e == ProxiesSort.delay
+                              ? FluentIcons.flash_24_filled
+                              : FluentIcons.list_24_filled,
+                          size: 18,
+                          color: sortBy == e
+                              ? const Color(0xFF6366F1)
+                              : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            e.present(t),
+                            style: TextStyle(
+                              fontWeight:
+                                  sortBy == e ? FontWeight.w600 : FontWeight.normal,
+                              color: sortBy == e
+                                  ? const Color(0xFF6366F1)
+                                  : (isDark ? Colors.white : Colors.black87),
+                            ),
+                          ),
+                        ),
+                        if (sortBy == e)
+                          const Icon(
+                            FluentIcons.checkmark_24_filled,
+                            size: 18,
+                            color: Color(0xFF6366F1),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ];
-          },
+              ];
+            },
+          ),
         ),
       ],
     );
@@ -154,7 +208,7 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF3B82F6).withOpacity(0.4),
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.4),
                   blurRadius: 20,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),

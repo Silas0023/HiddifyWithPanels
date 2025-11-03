@@ -80,12 +80,12 @@ class HomePage extends HookConsumerWidget {
                       ),
 
                       const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                      const SliverToBoxAdapter(child: ActionButtonsRow()),
-                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
                       const SliverToBoxAdapter(
                         child: ActiveProxyDelayIndicator(),
                       ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                      const SliverToBoxAdapter(child: ActionButtonsRow()),
+
                       const SliverToBoxAdapter(child: SizedBox(height: 48)),
                       // 隐藏底部连接信息卡片（显示"连接"标题、代理名称和IP地址）
                       // if (MediaQuery.sizeOf(context).width < 840) const SliverToBoxAdapter(child: ActiveProxyFooter()),

@@ -88,9 +88,7 @@ class _UpdateConfigButtonState extends ConsumerState<UpdateConfigButton> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDark
-                    ? [const Color(0xFF1E3A5F), const Color(0xFF0D2847)]
-                    : [const Color(0xFFFFFFFF), const Color(0xFFF8FAFC)],
+                colors: isDark ? [const Color(0xFF1E3A5F), const Color(0xFF0D2847)] : [const Color(0xFFFFFFFF), const Color(0xFFF8FAFC)],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
@@ -153,7 +151,7 @@ class _UpdateConfigButtonState extends ConsumerState<UpdateConfigButton> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '更新VPN配置',
+                        '更新连接配置',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,

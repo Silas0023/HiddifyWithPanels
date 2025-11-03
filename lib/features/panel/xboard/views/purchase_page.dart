@@ -180,7 +180,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                               t,
                             );
                           },
-                          loading: () => const SizedBox.shrink(),
+                          loading: () => _buildUserInfoCardSkeleton(isDark),
                           error: (_, __) => const SizedBox.shrink(),
                         ),
                       ),
@@ -678,6 +678,156 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
           ],
         ),
       ),
+    );
+  }
+
+  // 骨架屏：用户信息卡片加载状态
+  Widget _buildUserInfoCardSkeleton(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1E3A5F).withValues(alpha: 0.3),
+                  const Color(0xFF0D2847).withValues(alpha: 0.3),
+                ]
+              : [
+                  const Color(0xFFEFF6FF).withValues(alpha: 0.5),
+                  const Color(0xFFDBEAFE).withValues(alpha: 0.5),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : const Color(0xFF93C5FD).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标题行骨架
+            Row(
+              children: [
+                // 图标骨架
+                _buildShimmerBox(
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // "当前套餐" 文字骨架
+                      _buildShimmerBox(
+                        width: 80,
+                        height: 14,
+                        borderRadius: 4,
+                        isDark: isDark,
+                      ),
+                      const SizedBox(height: 8),
+                      // 套餐名称骨架
+                      _buildShimmerBox(
+                        width: 150,
+                        height: 20,
+                        borderRadius: 4,
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // 过期时间信息骨架
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  // 图标骨架
+                  _buildShimmerBox(
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // "过期时间" 文字骨架
+                        _buildShimmerBox(
+                          width: 70,
+                          height: 13,
+                          borderRadius: 4,
+                          isDark: isDark,
+                        ),
+                        const SizedBox(height: 6),
+                        // 日期骨架
+                        _buildShimmerBox(
+                          width: 120,
+                          height: 16,
+                          borderRadius: 4,
+                          isDark: isDark,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 剩余天数标签骨架
+                  _buildShimmerBox(
+                    width: 80,
+                    height: 28,
+                    borderRadius: 20,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 骨架屏基础组件：带动画的灰色占位框
+  Widget _buildShimmerBox({
+    required double width,
+    required double height,
+    required double borderRadius,
+    required bool isDark,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.3, end: 0.7),
+      duration: const Duration(milliseconds: 1000),
+      curve: Curves.easeInOut,
+      builder: (context, value, child) {
+        return Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: (isDark ? Colors.white : Colors.grey)
+                .withValues(alpha: value),
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        );
+      },
+      onEnd: () {
+        // 动画结束后反向播放，创建呼吸效果
+      },
     );
   }
 }

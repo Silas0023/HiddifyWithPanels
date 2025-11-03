@@ -4,7 +4,8 @@ import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/router.dart';
 
-import 'package:hiddify/features/panel/xboard/utils/logout_dialog.dart';
+// 退出菜单已隐藏，不再需要 LogoutDialog
+// import 'package:hiddify/features/panel/xboard/utils/logout_dialog.dart';
 import 'package:hiddify/features/stats/widget/side_bar_stats_overview.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -26,16 +27,16 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
     final selectedIndex = getCurrentIndex(context);
 
     final destinations = [
-      NavigationDestination(
-        icon: const Icon(FluentIcons.power_20_filled),
+      const NavigationDestination(
+        icon: Icon(FluentIcons.power_20_filled),
         label: '连接VPN',
       ),
-      NavigationDestination(
-        icon: const Icon(FluentIcons.filter_20_filled),
+      const NavigationDestination(
+        icon: Icon(FluentIcons.filter_20_filled),
         label: '区域选择',
       ),
-      NavigationDestination(
-        icon: const Icon(FluentIcons.apps_24_filled),
+      const NavigationDestination(
+        icon: Icon(FluentIcons.apps_24_filled),
         label: '应用中心',
       ),
       NavigationDestination(
@@ -47,12 +48,12 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
         label: t.userInfo.pageTitle,
       ),
       NavigationDestination(
-        icon: const Icon(FluentIcons.box_edit_20_filled),
-        label: t.config.pageTitle,
-      ),
-      NavigationDestination(
         icon: const Icon(FluentIcons.settings_20_filled),
         label: t.settings.pageTitle,
+      ),
+      NavigationDestination(
+        icon: const Icon(FluentIcons.box_edit_20_filled),
+        label: t.config.pageTitle,
       ),
       // 隐藏日志菜单
       // NavigationDestination(
@@ -64,25 +65,29 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
       //   icon: const Icon(FluentIcons.info_20_filled),
       //   label: t.about.pageTitle,
       // ),
-      const NavigationDestination(
-        icon: Icon(FluentIcons.sign_out_20_filled),
-        label: '退出',
-      ),
+      // 隐藏退出菜单
+      // const NavigationDestination(
+      //   icon: Icon(FluentIcons.sign_out_20_filled),
+      //   label: '退出',
+      // ),
     ];
 
     return _CustomAdaptiveScaffold(
       selectedIndex: selectedIndex,
       onSelectedIndexChange: (index) {
-        if (index == destinations.length - 1) {
-          // 显示登出对话框
-          showDialog(
-            context: context,
-            builder: (context) => const LogoutDialog(), // 使用 LogoutDialog 组件
-          );
-        } else {
-          RootScaffold.stateKey.currentState?.closeDrawer();
-          switchTab(index, context);
-        }
+        // 退出菜单已隐藏，不再需要检查
+        // if (index == destinations.length - 1) {
+        //   // 显示登出对话框
+        //   showDialog(
+        //     context: context,
+        //     builder: (context) => const LogoutDialog(),
+        //   );
+        // } else {
+        //   RootScaffold.stateKey.currentState?.closeDrawer();
+        //   switchTab(index, context);
+        // }
+        RootScaffold.stateKey.currentState?.closeDrawer();
+        switchTab(index, context);
       },
       destinations: destinations,
       drawerDestinationRange: useMobileRouter ? (5, null) : (0, null),

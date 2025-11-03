@@ -87,8 +87,8 @@ final tabLocations = [
   const AppCenterRoute().location,
   const PurchaseRoute().location,
   const UserInfoRoute().location,
-  const ConfigOptionsRoute().location,
   const SettingsRoute().location,
+  const ConfigOptionsRoute().location,
   const LogsOverviewRoute().location,
   const AboutRoute().location,
 ];
