@@ -20,13 +20,8 @@ class UserInfoPage extends ConsumerStatefulWidget {
 }
 
 class _UserInfoPageState extends ConsumerState<UserInfoPage> {
-  @override
-  void initState() {
-    super.initState();
-    // 页面加载时自动刷新数据
-    _refreshData();
-  }
-
+  // 移除自动刷新，避免每次进入页面都重新加载
+  // 保留手动刷新功能
   void _refreshData() {
     // 刷新用户信息
     // ignore: unused_result
