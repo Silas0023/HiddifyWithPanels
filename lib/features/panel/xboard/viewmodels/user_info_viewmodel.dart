@@ -8,7 +8,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'user_info_viewmodel.g.dart';
 
 // 使用 AsyncNotifierProvider 替代 ChangeNotifier + FutureProvider
-@riverpod
+// keepAlive: true 保持 provider 活跃，避免导航时重复刷新
+@Riverpod(keepAlive: true)
 class UserInfoViewModel extends _$UserInfoViewModel {
   late final UserService _userService;
 
