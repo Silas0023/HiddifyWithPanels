@@ -60,7 +60,8 @@ AppCenterService appCenterService(AppCenterServiceRef ref) {
   return AppCenterService(httpService);
 }
 
-@riverpod
+// keepAlive: true 保持 provider 活跃，避免导航时重复加载
+@Riverpod(keepAlive: true)
 Future<AppCenterData> appCenterData(AppCenterDataRef ref) async {
   final service = ref.watch(appCenterServiceProvider);
   return service.getAppCenter();

@@ -1,3 +1,4 @@
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/app_center/models/shortcut_item.dart';
@@ -28,6 +29,20 @@ class AppCenterPage extends HookConsumerWidget {
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  FluentIcons.arrow_sync_24_regular,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                onPressed: () {
+                  // 刷新应用中心数据
+                  ref.invalidate(appCenterDataProvider);
+                },
+                tooltip: '刷新',
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           // 移除分类标签显示
           shortcutsAsync.when(
