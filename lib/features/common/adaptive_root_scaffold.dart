@@ -32,7 +32,7 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.filter_20_filled),
-        label: '国家选择',
+        label: '区域选择',
       ),
       NavigationDestination(
         icon: const Icon(FluentIcons.apps_24_filled),
