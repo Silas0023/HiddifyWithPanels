@@ -14,9 +14,13 @@ import 'package:hiddify/features/panel/xboard/views/components/dialog/purchase_d
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 
-final purchaseViewModelProvider = ChangeNotifierProvider(
-  (ref) => PurchaseViewModel(purchaseService: PurchaseService()),
-);
+// 使用 ChangeNotifierProvider（不带 autoDispose）保持数据缓存
+final purchaseViewModelProvider = ChangeNotifierProvider((ref) {
+  final viewModel = PurchaseViewModel(purchaseService: PurchaseService());
+  // 只在首次加载时获取数据（缓存策略）
+  viewModel.loadIfNeeded();
+  return viewModel;
+});
 
 class PurchasePage extends ConsumerStatefulWidget {
   const PurchasePage({super.key});
@@ -26,15 +30,6 @@ class PurchasePage extends ConsumerStatefulWidget {
 }
 
 class _PurchasePageState extends ConsumerState<PurchasePage> {
-  @override
-  void initState() {
-    super.initState();
-    // Delay the provider modification until after the first frame is built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(purchaseViewModelProvider).fetchPlans();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
@@ -71,6 +66,20 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             color: isDark ? Colors.white : Colors.black87,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              FluentIcons.arrow_sync_24_regular,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () {
+              // 手动刷新套餐数据
+              ref.read(purchaseViewModelProvider).fetchPlans();
+            },
+            tooltip: '刷新',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
