@@ -5,11 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
+import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/purchase_viewmodel.dart';
 
 import 'package:hiddify/features/panel/xboard/views/components/dialog/purchase_details_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 
 final purchaseViewModelProvider = ChangeNotifierProvider(
   (ref) => PurchaseViewModel(purchaseService: PurchaseService()),
@@ -119,6 +121,9 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                 ),
               );
             } else {
+              // 获取用户信息
+              final userInfoAsync = ref.watch(userTokenInfoProvider);
+
               return LayoutBuilder(
                 builder: (context, constraints) {
                   // 根据屏幕宽度计算列数和卡片尺寸
@@ -136,19 +141,55 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                     childAspectRatio = 0.75; // 增加高度
                   }
 
-                  return GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      childAspectRatio: childAspectRatio,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 24,
-                    ),
-                    itemCount: viewModel.plans.length,
-                    itemBuilder: (context, index) {
-                      final plan = viewModel.plans[index];
-                      return _buildPlanCard(plan, t, context, ref, theme, index);
-                    },
+                  return CustomScrollView(
+                    slivers: [
+                      // 用户信息卡片
+                      SliverToBoxAdapter(
+                        child: userInfoAsync.when(
+                          data: (userInfo) {
+                            if (userInfo == null) return const SizedBox.shrink();
+
+                            // 通过 planId 找到对应的套餐名称
+                            final currentPlan = viewModel.plans.firstWhere(
+                              (plan) => plan.id == userInfo.planId,
+                              orElse: () => Plan(
+                                id: 0,
+                                name: '免费套餐',
+                                content: '',
+                              ),
+                            );
+
+                            return _buildUserInfoCard(
+                              userInfo,
+                              currentPlan,
+                              isDark,
+                              t,
+                            );
+                          },
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                        ),
+                      ),
+                      // 套餐网格
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                        sliver: SliverGrid(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            childAspectRatio: childAspectRatio,
+                            crossAxisSpacing: 20,
+                            mainAxisSpacing: 24,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final plan = viewModel.plans[index];
+                              return _buildPlanCard(plan, t, context, ref, theme, index);
+                            },
+                            childCount: viewModel.plans.length,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               );
@@ -406,6 +447,223 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildUserInfoCard(
+    dynamic userInfo,
+    Plan currentPlan,
+    bool isDark,
+    Translations t,
+  ) {
+    // 格式化过期时间
+    String formatExpireTime(int? expiredAt) {
+      if (expiredAt == null) return '永久有效';
+      final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000);
+      final now = DateTime.now();
+      final difference = expireDate.difference(now);
+
+      if (difference.inDays < 0) {
+        return '已过期';
+      } else if (difference.inDays == 0) {
+        return '今天过期';
+      } else if (difference.inDays == 1) {
+        return '明天过期';
+      } else {
+        final formatter = DateFormat('yyyy年MM月dd日');
+        return formatter.format(expireDate);
+      }
+    }
+
+    // 获取剩余天数
+    int? getRemainingDays(int? expiredAt) {
+      if (expiredAt == null) return null;
+      final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000);
+      final now = DateTime.now();
+      final difference = expireDate.difference(now);
+      return difference.inDays;
+    }
+
+    final remainingDays = getRemainingDays(userInfo.expiredAt);
+    final isExpired = remainingDays != null && remainingDays < 0;
+    final isExpiringSoon = remainingDays != null && remainingDays >= 0 && remainingDays <= 7;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1E3A5F),
+                  const Color(0xFF0D2847),
+                ]
+              : [
+                  const Color(0xFFEFF6FF),
+                  const Color(0xFFDBEAFE),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : const Color(0xFF93C5FD),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : const Color(0xFF3B82F6)).withOpacity(0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标题行
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF3B82F6),
+                        const Color(0xFF2563EB),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF3B82F6).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    FluentIcons.person_card_24_filled,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '当前套餐',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.7)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        currentPlan.name,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // 过期时间信息
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isExpired
+                        ? FluentIcons.warning_24_filled
+                        : isExpiringSoon
+                            ? FluentIcons.clock_alarm_24_filled
+                            : FluentIcons.calendar_checkmark_24_filled,
+                    color: isExpired
+                        ? Colors.red[400]
+                        : isExpiringSoon
+                            ? Colors.orange[400]
+                            : (isDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6)),
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '过期时间',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? Colors.white.withOpacity(0.6)
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formatExpireTime(userInfo.expiredAt),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isExpired
+                                ? Colors.red[400]
+                                : isExpiringSoon
+                                    ? Colors.orange[400]
+                                    : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 剩余天数标签
+                  if (remainingDays != null && remainingDays >= 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isExpiringSoon
+                            ? Colors.orange[400]
+                            : const Color(0xFF10B981),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '剩余 $remainingDays 天',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
