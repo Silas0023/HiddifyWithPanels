@@ -61,28 +61,43 @@ class SliverErrorBodyPlaceholder extends HookConsumerWidget {
             end: Alignment.bottomCenter,
             colors: isDark
                 ? [
-                    const Color(0xFF0F172A),
-                    const Color(0xFF1E293B).withOpacity(0.8),
+                    const Color(0xFF0A0E1A),
+                    const Color(0xFF1A1F35),
                   ]
                 : [
-                    const Color(0xFFF8FAFC),
+                    const Color(0xFFF0F4FF),
                     const Color(0xFFFFFFFF),
                   ],
           ),
         ),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 装饰性圆圈背景
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // 外层光晕圆圈
-                    if (icon != null) ...[
+                // 装饰性图标区域
+                if (icon != null) ...[
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // 最外层装饰圆环
+                      Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.05),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 1.0],
+                          ),
+                        ),
+                      ),
+                      // 第二层装饰圆环
                       Container(
                         width: 160,
                         height: 160,
@@ -90,123 +105,139 @@ class SliverErrorBodyPlaceholder extends HookConsumerWidget {
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              (isDark ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA)).withOpacity(0.1),
+                              (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.1),
                               Colors.transparent,
                             ],
-                            stops: const [0.0, 1.0],
+                            stops: const [0.2, 1.0],
                           ),
                         ),
                       ),
-                      // 中层圆圈
+                      // 第三层圆环带边框
                       Container(
-                        width: 128,
-                        height: 128,
+                        width: 130,
+                        height: 130,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              (isDark ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA)).withOpacity(0.15),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.3, 1.0],
+                          border: Border.all(
+                            color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.15),
+                            width: 1.5,
                           ),
                         ),
                       ),
-                      // 图标容器
+                      // 主图标容器
                       Container(
-                        width: 100,
-                        height: 100,
+                        width: 110,
+                        height: 110,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: isDark
                                 ? [
-                                    const Color(0xFF1E3A5F).withOpacity(0.8),
-                                    const Color(0xFF0D2847).withOpacity(0.6),
+                                    const Color(0xFF4F46E5),
+                                    const Color(0xFF6366F1),
                                   ]
                                 : [
-                                    const Color(0xFFEFF6FF),
-                                    const Color(0xFFDBEAFE),
+                                    const Color(0xFF6366F1),
+                                    const Color(0xFF818CF8),
                                   ],
                           ),
                           shape: BoxShape.circle,
-                          border: Border.all(
-                            color: (isDark ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA)).withOpacity(0.2),
-                            width: 2,
-                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: (isDark ? const Color(0xFF3B82F6) : const Color(0xFF60A5FA)).withOpacity(0.2),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
+                              color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.4),
+                              blurRadius: 32,
+                              offset: const Offset(0, 12),
+                              spreadRadius: -4,
                             ),
                             BoxShadow(
-                              color: (isDark ? Colors.black : Colors.grey[300]!).withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.2),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
                         child: Icon(
                           icon,
-                          size: 52,
-                          color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6),
+                          size: 56,
+                          color: Colors.white,
                         ),
                       ),
                     ],
-                  ],
-                ),
-                const Gap(48),
+                  ),
+                  const Gap(56),
+                ],
                 // 消息文本容器
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: isDark
                           ? [
-                              const Color(0xFF1E293B).withOpacity(0.7),
-                              const Color(0xFF0F172A).withOpacity(0.5),
+                              const Color(0xFF1E293B).withOpacity(0.8),
+                              const Color(0xFF0F172A).withOpacity(0.6),
                             ]
                           : [
-                              Colors.white,
-                              const Color(0xFFFAFAFA),
+                              Colors.white.withOpacity(0.95),
+                              Colors.white.withOpacity(0.85),
                             ],
                     ),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                     border: Border.all(
                       color: isDark
-                          ? Colors.white.withOpacity(0.08)
-                          : Colors.grey[200]!.withOpacity(0.8),
-                      width: 1.5,
+                          ? Colors.white.withOpacity(0.06)
+                          : const Color(0xFFE0E7FF),
+                      width: 2,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isDark ? Colors.black : Colors.grey[400]!).withOpacity(isDark ? 0.3 : 0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
-                        spreadRadius: -2,
+                        color: (isDark ? Colors.black : const Color(0xFF6366F1)).withOpacity(isDark ? 0.4 : 0.08),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                        spreadRadius: -4,
                       ),
                       BoxShadow(
-                        color: (isDark ? Colors.black : Colors.grey[300]!).withOpacity(isDark ? 0.2 : 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: (isDark ? Colors.black : Colors.grey[300]!).withOpacity(isDark ? 0.2 : 0.05),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Text(
-                    msg,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 17,
-                      height: 1.7,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? Colors.white.withOpacity(0.92) : const Color(0xFF1E293B),
-                      letterSpacing: 0.3,
-                    ),
+                  child: Column(
+                    children: [
+                      // 装饰性顶部线条
+                      Container(
+                        width: 48,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.6),
+                              (isDark ? const Color(0xFF6366F1) : const Color(0xFF818CF8)).withOpacity(0.6),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const Gap(20),
+                      // 消息文本
+                      Text(
+                        msg,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18,
+                          height: 1.8,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.95)
+                              : const Color(0xFF1E293B),
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
