@@ -1,6 +1,7 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:hiddify/core/router/routes.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 // TODO: improve
@@ -79,91 +80,100 @@ class SliverErrorBodyPlaceholder extends HookConsumerWidget {
               children: [
                 // 装饰性图标区域
                 if (icon != null) ...[
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // 最外层装饰圆环
-                      Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.05),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.0, 1.0],
-                          ),
-                        ),
-                      ),
-                      // 第二层装饰圆环
-                      Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.1),
-                              Colors.transparent,
-                            ],
-                            stops: const [0.2, 1.0],
-                          ),
-                        ),
-                      ),
-                      // 第三层圆环带边框
-                      Container(
-                        width: 130,
-                        height: 130,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.15),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      // 主图标容器
-                      Container(
-                        width: 110,
-                        height: 110,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: isDark
-                                ? [
-                                    const Color(0xFF4F46E5),
-                                    const Color(0xFF6366F1),
-                                  ]
-                                : [
-                                    const Color(0xFF6366F1),
-                                    const Color(0xFF818CF8),
-                                  ],
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.4),
-                              blurRadius: 32,
-                              offset: const Offset(0, 12),
-                              spreadRadius: -4,
+                  GestureDetector(
+                    onTap: () {
+                      // 点击图标跳转到连接VPN页面（首页）
+                      const HomeRoute().go(context);
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 最外层装饰圆环
+                          Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.05),
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.0, 1.0],
+                              ),
                             ),
-                            BoxShadow(
-                              color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.2),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
+                          ),
+                          // 第二层装饰圆环
+                          Container(
+                            width: 160,
+                            height: 160,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.1),
+                                  Colors.transparent,
+                                ],
+                                stops: const [0.2, 1.0],
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Icon(
-                          icon,
-                          size: 56,
-                          color: Colors.white,
-                        ),
+                          ),
+                          // 第三层圆环带边框
+                          Container(
+                            width: 130,
+                            height: 130,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.15),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          // 主图标容器
+                          Container(
+                            width: 110,
+                            height: 110,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: isDark
+                                    ? [
+                                        const Color(0xFF4F46E5),
+                                        const Color(0xFF6366F1),
+                                      ]
+                                    : [
+                                        const Color(0xFF6366F1),
+                                        const Color(0xFF818CF8),
+                                      ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.4),
+                                  blurRadius: 32,
+                                  offset: const Offset(0, 12),
+                                  spreadRadius: -4,
+                                ),
+                                BoxShadow(
+                                  color: (isDark ? const Color(0xFF4F46E5) : const Color(0xFF6366F1)).withOpacity(0.2),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              icon,
+                              size: 56,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                   const Gap(56),
                 ],
