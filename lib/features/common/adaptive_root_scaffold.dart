@@ -64,8 +64,8 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
       //   icon: const Icon(FluentIcons.info_20_filled),
       //   label: t.about.pageTitle,
       // ),
-      NavigationDestination(
-        icon: const Icon(FluentIcons.sign_out_20_filled),
+      const NavigationDestination(
+        icon: Icon(FluentIcons.sign_out_20_filled),
         label: '退出',
       ),
     ];
