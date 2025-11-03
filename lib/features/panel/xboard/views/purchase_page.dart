@@ -155,7 +155,11 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                               (plan) => plan.id == userInfo.planId,
                               orElse: () => Plan(
                                 id: 0,
+                                groupId: 0,
+                                transferEnable: 0,
                                 name: '免费套餐',
+                                speedLimit: 0,
+                                show: true,
                                 content: '',
                               ),
                             );
