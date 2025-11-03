@@ -272,6 +272,9 @@ class _ConnectionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isConnected = buttonColor != Colors.red &&
+                        buttonColor != Color.fromARGB(255, 185, 176, 103) &&
+                        enabled;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -287,36 +290,82 @@ class _ConnectionButton extends StatelessWidget {
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        blurRadius: 32,
-                        spreadRadius: 0,
-                        color: buttonColor.withOpacity(isDark ? 0.3 : 0.2),
-                        offset: const Offset(0, 12),
+                        blurRadius: 40,
+                        spreadRadius: 4,
+                        color: buttonColor.withOpacity(isDark ? 0.4 : 0.25),
+                        offset: const Offset(0, 16),
                       ),
                       BoxShadow(
-                        blurRadius: 16,
+                        blurRadius: 20,
                         spreadRadius: -4,
-                        color: buttonColor.withOpacity(isDark ? 0.2 : 0.15),
-                        offset: const Offset(0, 6),
+                        color: buttonColor.withOpacity(isDark ? 0.3 : 0.2),
+                        offset: const Offset(0, 8),
                       ),
                     ]
                   : [],
             ),
-            width: 160,
-            height: 160,
+            width: 180,
+            height: 180,
             child: Material(
               key: const ValueKey("home_connection_button"),
               shape: const CircleBorder(),
-              elevation: enabled ? 4 : 0,
-              color: isDark ? const Color(0xFF1E2936) : Colors.white,
+              elevation: 0,
+              color: Colors.transparent,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: enabled
+                        ? isConnected
+                            ? [
+                                buttonColor,
+                                buttonColor.withOpacity(0.8),
+                              ]
+                            : isDark
+                                ? [
+                                    const Color(0xFF1E293B),
+                                    const Color(0xFF0F172A),
+                                  ]
+                                : [
+                                    Colors.white,
+                                    const Color(0xFFF8FAFC),
+                                  ]
+                        : isDark
+                            ? [
+                                const Color(0xFF1E293B).withOpacity(0.5),
+                                const Color(0xFF0F172A).withOpacity(0.5),
+                              ]
+                            : [
+                                Colors.white.withOpacity(0.5),
+                                const Color(0xFFF8FAFC).withOpacity(0.5),
+                              ],
+                  ),
                   border: Border.all(
                     color: enabled
-                        ? buttonColor.withOpacity(isDark ? 0.4 : 0.3)
+                        ? isConnected
+                            ? Colors.white.withOpacity(isDark ? 0.2 : 0.3)
+                            : isDark
+                                ? Colors.white.withOpacity(0.1)
+                                : const Color(0xFFE2E8F0)
                         : (isDark ? Colors.white10 : Colors.black12),
                     width: 3,
                   ),
+                  boxShadow: isConnected
+                      ? [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(isDark ? 0.1 : 0.2),
+                            blurRadius: 12,
+                            offset: const Offset(-4, -4),
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                            blurRadius: 12,
+                            offset: const Offset(4, 4),
+                          ),
+                        ]
+                      : [],
                 ),
                 child: InkWell(
                   onTap: enabled ? onTap : null,
@@ -326,7 +375,7 @@ class _ConnectionButton extends StatelessWidget {
                   child: Center(
                     child: TweenAnimationBuilder(
                       tween: ColorTween(end: buttonColor),
-                      duration: const Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 400),
                       curve: Curves.easeInOut,
                       builder: (context, value, child) {
                         if (useImage) {
@@ -338,14 +387,59 @@ class _ConnectionButton extends StatelessWidget {
                             ),
                           );
                         } else {
-                          return Container(
-                            padding: const EdgeInsets.all(32),
-                            child: Assets.images.logo.svg(
-                              colorFilter: ColorFilter.mode(
-                                enabled ? value! : value!.withOpacity(0.5),
-                                BlendMode.srcIn,
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // 外层光晕圆环 (仅已连接状态)
+                              if (isConnected) ...[
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(isDark ? 0.15 : 0.25),
+                                      width: 2,
+                                    ),
+                                  ),
+                                )
+                                .animate(onPlay: (controller) => controller.repeat())
+                                .scaleXY(
+                                  begin: 1.0,
+                                  end: 1.2,
+                                  duration: 2000.ms,
+                                  curve: Curves.easeInOut,
+                                )
+                                .fade(
+                                  begin: 0.6,
+                                  end: 0.0,
+                                  duration: 2000.ms,
+                                  curve: Curves.easeInOut,
+                                ),
+                              ],
+                              // 主图标
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isConnected
+                                      ? Colors.white.withOpacity(isDark ? 0.15 : 0.2)
+                                      : Colors.transparent,
+                                ),
+                                child: Icon(
+                                  isConnected
+                                      ? FluentIcons.shield_checkmark_24_filled
+                                      : FluentIcons.power_24_filled,
+                                  size: 42,
+                                  color: isConnected
+                                      ? Colors.white
+                                      : (enabled
+                                          ? (isDark ? Colors.white70 : const Color(0xFF64748B))
+                                          : (isDark ? Colors.white30 : Colors.black26)),
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         }
                       },
@@ -353,19 +447,30 @@ class _ConnectionButton extends StatelessWidget {
                   ),
                 ),
               ),
-            ).animate(target: enabled ? 0 : 1).scaleXY(end: .95, curve: Curves.easeOut),
+            )
+            .animate(target: enabled ? 0 : 1)
+            .scaleXY(end: .92, curve: Curves.easeOut)
+            .then()
+            .shimmer(
+              duration: 2000.ms,
+              color: isConnected && enabled
+                  ? Colors.white.withOpacity(0.3)
+                  : Colors.transparent,
+            ),
           ),
         ),
-        const Gap(24),
+        const Gap(28),
         ExcludeSemantics(
           child: AnimatedText(
             label,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              letterSpacing: 0.2,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              letterSpacing: 0.5,
               color: enabled
-                  ? (isDark ? Colors.white : const Color(0xFF1a1a1a))
+                  ? isConnected
+                      ? (isDark ? Colors.white : buttonColor)
+                      : (isDark ? Colors.white : const Color(0xFF1E293B))
                   : (isDark ? Colors.white38 : Colors.black38),
             ),
           ),
