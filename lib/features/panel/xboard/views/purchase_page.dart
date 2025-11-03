@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
+import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
 import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/purchase_viewmodel.dart';
@@ -451,7 +452,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
   }
 
   Widget _buildUserInfoCard(
-    dynamic userInfo,
+    UserInfo userInfo,
     Plan currentPlan,
     bool isDark,
     Translations t,
@@ -531,12 +532,12 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFF3B82F6),
-                        const Color(0xFF2563EB),
+                        Color(0xFF3B82F6),
+                        Color(0xFF2563EB),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -549,7 +550,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
                     ],
                   ),
                   child: const Icon(
-                    FluentIcons.person_card_24_filled,
+                    FluentIcons.person_24_filled,
                     color: Colors.white,
                     size: 24,
                   ),
