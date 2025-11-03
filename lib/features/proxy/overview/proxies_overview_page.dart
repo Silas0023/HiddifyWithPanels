@@ -181,7 +181,7 @@ class ProxiesOverviewPage extends HookConsumerWidget with PresLogger {
               appBar,
               SliverErrorBodyPlaceholder(
                 t.presentShortError(error),
-                icon: null,
+                icon: FluentIcons.plug_disconnected_24_regular,
               ),
             ],
           ),
