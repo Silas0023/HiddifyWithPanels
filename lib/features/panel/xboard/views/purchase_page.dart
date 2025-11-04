@@ -44,6 +44,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+        centerTitle: true,
         // 在小窗口时显示左上角菜单按钮
         leading: isSmallScreen
             ? Builder(
@@ -63,6 +64,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
           t.purchase.pageTitle,
           style: TextStyle(
             fontWeight: FontWeight.w600,
+            fontSize: 20,
             color: isDark ? Colors.white : Colors.black87,
           ),
         ),

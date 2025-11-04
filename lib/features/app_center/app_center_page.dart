@@ -24,9 +24,9 @@ class AppCenterPage extends HookConsumerWidget {
             title: Text(
               t.appCenter.pageTitle,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-                color: isDark ? Colors.white : const Color(0xFF0F172A),
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
             actions: [

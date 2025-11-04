@@ -61,3 +61,8 @@ app.*.map.json
 
 /data.fvm/
 .fvm/
+
+# macOS release packages
+*.dmg
+*.pkg
+rw.*.dmg

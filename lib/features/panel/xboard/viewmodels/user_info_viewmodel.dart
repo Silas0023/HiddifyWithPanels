@@ -1,6 +1,7 @@
 // viewmodels/user_info_viewmodel.dart
 import 'package:flutter/foundation.dart';
 import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
+import 'package:hiddify/features/panel/xboard/services/auth_provider.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/user_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -51,6 +52,16 @@ class UserInfoViewModel extends _$UserInfoViewModel {
       if (kDebugMode) {
         print('获取用户信息失败: $e');
       }
+
+      // 如果获取用户信息失败（可能是token无效），清除token并更新登录状态
+      // 这样用户会自动被重定向到登录页面
+      await deleteToken();
+      ref.read(authProvider.notifier).state = false;
+
+      if (kDebugMode) {
+        print('[UserInfoViewModel] Token已清除，用户已退出登录');
+      }
+
       // 更新状态为错误
       state = AsyncValue.error(e, stackTrace);
       return null;

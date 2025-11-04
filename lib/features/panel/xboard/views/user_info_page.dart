@@ -43,10 +43,12 @@ class _UserInfoPageState extends ConsumerState<UserInfoPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: isDark ? Colors.grey[850] : Colors.white,
+        centerTitle: true,
         title: Text(
           t.userInfo.pageTitle,
           style: TextStyle(
             fontWeight: FontWeight.w600,
+            fontSize: 20,
             color: isDark ? Colors.white : Colors.black87,
           ),
         ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hiddify/bootstrap.dart';
 import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/utils/utils.dart';
@@ -21,6 +20,7 @@ class NestedAppBar extends StatelessWidget {
     this.pinned = true,
     this.forceElevated = false,
     this.bottom,
+    this.centerTitle = true,
   });
 
   final Widget? title;
@@ -28,6 +28,7 @@ class NestedAppBar extends StatelessWidget {
   final bool pinned;
   final bool forceElevated;
   final PreferredSizeWidget? bottom;
+  final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +51,7 @@ class NestedAppBar extends StatelessWidget {
                 )
               : null),
       title: title,
+      centerTitle: centerTitle,
       actions: actions,
       pinned: pinned,
       forceElevated: forceElevated,
