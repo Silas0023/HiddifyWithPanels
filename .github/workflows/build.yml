@@ -80,7 +80,6 @@ jobs:
           retention-days: 1
 
   build_apk:
-    if: false  # 暂时禁用 Android 构建
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -112,14 +111,20 @@ jobs:
 
       - name: Build APK
         run: |
-          flutter build apk --release
+          make android-prepare
+          flutter build apk --target lib/main_prod.dart --release
+
+      - name: Copy to out APK
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk out/${TARGET_NAME_apk}.apk
 
       - name: Upload APK Artifact
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: build/app/outputs/flutter-apk/*.apk
+          path: ./out
           retention-days: 1
 
   build_windows_x64:

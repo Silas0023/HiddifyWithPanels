@@ -115,7 +115,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   device_info_plus: b0fafc687fb901e2af612763340f1b0d4352f8e5
-  flutter_timezone: bed4b9a391e5727a612e722d7f518882c5da205d
+  flutter_timezone: d272288c69082ad571630e0d17140b3d6b93dc0c
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   in_app_review: 66e7680752b632d83f4f0e88b34d52ed303fbff4
   mobile_scanner: bd1e7cd9b67b442f4d903747f4778e040513f860
