@@ -74,13 +74,10 @@ dependencies:
   dart_mappable: ^4.2.1
   fluentui_system_icons: ^1.1.229
   http: ^1.2.0
-  timezone_to_country: ^2.1.0
+  timezone_to_country: ^3.1.0
   json_path: ^0.7.1
   webview_flutter: ^4.13.0
-  # permission_handler: ^11.3.0 # is not compatible with windows
-  #flutter_easy_permission: ^1.1.2
-  flutter_easy_permission: 
-     git: https://github.com/unger1984/flutter_easy_permission.git
+  permission_handler: ^11.3.1
   in_app_review: ^2.0.9
   # circle_flags: ^4.0.2
   circle_flags:

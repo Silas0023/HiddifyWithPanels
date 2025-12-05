@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_timezone
   screen_retriever
   sqlite3_flutter_libs
   tray_manager
