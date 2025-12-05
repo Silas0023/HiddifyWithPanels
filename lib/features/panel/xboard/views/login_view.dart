@@ -371,7 +371,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
               ),
               const SizedBox(width: 16),
               const Text(
-                '蓝快加速器',
+                '小火箭',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w700,
@@ -945,7 +945,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
         ),
         const SizedBox(height: 24),
         Text(
-          '欢迎使用蓝快加速器',
+          '欢迎使用小火箭',
           style: TextStyle(
             fontSize: constraints.maxWidth > 600 ? 28 : 24,
             fontWeight: FontWeight.w600,

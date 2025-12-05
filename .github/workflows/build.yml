@@ -19,14 +19,14 @@ env:
   FLUTTER_VERSION: '3.32.8'
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   TAG_NAME: "${{ inputs.tag-name }}"
-  TARGET_NAME_apk: "蓝快加速器-Android"
-  TARGET_NAME_exe: "蓝快加速器-Windows-x64"
-  TARGET_NAME_dmg: "蓝快加速器-MacOS"
-  TARGET_NAME_pkg: "蓝快加速器-MacOS-Installer"
-  TARGET_NAME_ipa: "蓝快加速器-iOS"
-  TARGET_NAME_AppImage: "蓝快加速器-Linux-x64"
-  TARGET_NAME_deb: "蓝快加速器-Debian-x64"
-  TARGET_NAME_rpm: "蓝快加速器-rpm-x64"
+  TARGET_NAME_apk: "小火箭-Android"
+  TARGET_NAME_exe: "小火箭-Windows-x64"
+  TARGET_NAME_dmg: "小火箭-MacOS"
+  TARGET_NAME_pkg: "小火箭-MacOS-Installer"
+  TARGET_NAME_ipa: "小火箭-iOS"
+  TARGET_NAME_AppImage: "小火箭-Linux-x64"
+  TARGET_NAME_deb: "小火箭-Debian-x64"
+  TARGET_NAME_rpm: "小火箭-rpm-x64"
 
 jobs:
   build_linux:
@@ -381,8 +381,8 @@ jobs:
             # Use the first (or largest) installer found
             $exeInstaller = $exeInstallers | Sort-Object -Property Length -Descending | Select-Object -First 1
             Write-Host "`nSelected: $($exeInstaller.Name) - $([math]::Round($exeInstaller.Length/1MB,2)) MB"
-            Copy-Item -Path $exeInstaller.FullName -Destination "out\蓝快加速器-Windows-ARM64-Setup.exe"
-            Write-Host "Copied to out\蓝快加速器-Windows-ARM64-Setup.exe"
+            Copy-Item -Path $exeInstaller.FullName -Destination "out\小火箭-Windows-ARM64-Setup.exe"
+            Write-Host "Copied to out\小火箭-Windows-ARM64-Setup.exe"
           } else {
             Write-Error "No EXE installer found in dist directory"
             exit 1

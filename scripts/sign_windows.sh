@@ -44,7 +44,7 @@ echo "输出文件: $OUTPUT_FILE"
 osslsigncode sign \
   -pkcs12 "$CERT_FILE" \
   -pass "$CERT_PASSWORD" \
-  -n "蓝快加速器" \
+  -n "小火箭" \
   -i "https://radnb.com" \
   -t http://timestamp.digicert.com \
   -in "$INPUT_FILE" \

@@ -10,6 +10,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.hiddify.hiddify.bg.BoxService
+import com.quick.vpn.R
 import com.hiddify.hiddify.bg.ServiceConnection
 import com.hiddify.hiddify.constant.Status
 

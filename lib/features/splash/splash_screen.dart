@@ -111,7 +111,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
               // 应用名称
               Text(
-                '蓝快加速器',
+                '小火箭',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,

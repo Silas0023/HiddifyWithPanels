@@ -146,13 +146,16 @@ class PlatformSettingsHandler : FlutterPlugin, MethodChannel.MethodCallHandler, 
                                 (it.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
                                         || it.packageName == "android")
                             ) {
-                                list.add(
-                                    AppItem(
-                                        it.packageName,
-                                        it.applicationInfo.loadLabel(packageManager).toString(),
-                                        it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM == 1
+                                val appInfo = it.applicationInfo
+                                if (appInfo != null) {
+                                    list.add(
+                                        AppItem(
+                                            it.packageName,
+                                            appInfo.loadLabel(packageManager).toString(),
+                                            appInfo.flags and ApplicationInfo.FLAG_SYSTEM == 1
+                                        )
                                     )
-                                )
+                                }
                             }
                         }
                         list.sortBy { it.name }

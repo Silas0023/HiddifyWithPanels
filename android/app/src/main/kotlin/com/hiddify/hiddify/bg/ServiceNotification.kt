@@ -15,7 +15,7 @@ import androidx.core.app.ServiceCompat
 import androidx.lifecycle.MutableLiveData
 import com.hiddify.hiddify.Application
 import com.hiddify.hiddify.MainActivity
-import com.hiddify.hiddify.R
+import com.quick.vpn.R
 import com.hiddify.hiddify.Settings
 import com.hiddify.hiddify.constant.Action
 import com.hiddify.hiddify.constant.Status
