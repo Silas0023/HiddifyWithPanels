@@ -16,62 +16,230 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
   final bool selected;
   final VoidCallback onSelect;
 
+  // 从节点名称中提取国家国旗emoji
+  String _getCountryFlag(String name) {
+    final nameLower = name.toLowerCase();
+
+    // 国家名称映射到国旗emoji
+    final countryFlags = {
+      // 亚洲
+      '香港': '🇭🇰',
+      'hong kong': '🇭🇰',
+      'hk': '🇭🇰',
+      '台湾': '🇹🇼',
+      'taiwan': '🇹🇼',
+      'tw': '🇹🇼',
+      '日本': '🇯🇵',
+      'japan': '🇯🇵',
+      'jp': '🇯🇵',
+      '韩国': '🇰🇷',
+      'korea': '🇰🇷',
+      'kr': '🇰🇷',
+      '新加坡': '🇸🇬',
+      'singapore': '🇸🇬',
+      'sg': '🇸🇬',
+      '印度': '🇮🇳',
+      'india': '🇮🇳',
+      'in': '🇮🇳',
+      '泰国': '🇹🇭',
+      'thailand': '🇹🇭',
+      'th': '🇹🇭',
+      '越南': '🇻🇳',
+      'vietnam': '🇻🇳',
+      'vn': '🇻🇳',
+      '马来西亚': '🇲🇾',
+      'malaysia': '🇲🇾',
+      'my': '🇲🇾',
+      '印尼': '🇮🇩',
+      'indonesia': '🇮🇩',
+      'id': '🇮🇩',
+      '菲律宾': '🇵🇭',
+      'philippines': '🇵🇭',
+      'ph': '🇵🇭',
+      '澳门': '🇲🇴',
+      'macau': '🇲🇴',
+      'mo': '🇲🇴',
+
+      // 美洲
+      '美国': '🇺🇸',
+      'usa': '🇺🇸',
+      'us': '🇺🇸',
+      'united states': '🇺🇸',
+      'america': '🇺🇸',
+      '加拿大': '🇨🇦',
+      'canada': '🇨🇦',
+      'ca': '🇨🇦',
+      '巴西': '🇧🇷',
+      'brazil': '🇧🇷',
+      'br': '🇧🇷',
+      '阿根廷': '🇦🇷',
+      'argentina': '🇦🇷',
+      'ar': '🇦🇷',
+      '墨西哥': '🇲🇽',
+      'mexico': '🇲🇽',
+      'mx': '🇲🇽',
+      '智利': '🇨🇱',
+      'chile': '🇨🇱',
+      'cl': '🇨🇱',
+
+      // 欧洲
+      '英国': '🇬🇧',
+      'uk': '🇬🇧',
+      'united kingdom': '🇬🇧',
+      'britain': '🇬🇧',
+      'gb': '🇬🇧',
+      '德国': '🇩🇪',
+      'germany': '🇩🇪',
+      'de': '🇩🇪',
+      '法国': '🇫🇷',
+      'france': '🇫🇷',
+      'fr': '🇫🇷',
+      '荷兰': '🇳🇱',
+      'netherlands': '🇳🇱',
+      'nl': '🇳🇱',
+      '俄罗斯': '🇷🇺',
+      'russia': '🇷🇺',
+      'ru': '🇷🇺',
+      '意大利': '🇮🇹',
+      'italy': '🇮🇹',
+      'it': '🇮🇹',
+      '西班牙': '🇪🇸',
+      'spain': '🇪🇸',
+      'es': '🇪🇸',
+      '瑞士': '🇨🇭',
+      'switzerland': '🇨🇭',
+      'ch': '🇨🇭',
+      '瑞典': '🇸🇪',
+      'sweden': '🇸🇪',
+      'se': '🇸🇪',
+      '挪威': '🇳🇴',
+      'norway': '🇳🇴',
+      'no': '🇳🇴',
+      '芬兰': '🇫🇮',
+      'finland': '🇫🇮',
+      'fi': '🇫🇮',
+      '丹麦': '🇩🇰',
+      'denmark': '🇩🇰',
+      'dk': '🇩🇰',
+      '波兰': '🇵🇱',
+      'poland': '🇵🇱',
+      'pl': '🇵🇱',
+      '乌克兰': '🇺🇦',
+      'ukraine': '🇺🇦',
+      'ua': '🇺🇦',
+      '土耳其': '🇹🇷',
+      'turkey': '🇹🇷',
+      'tr': '🇹🇷',
+      '爱尔兰': '🇮🇪',
+      'ireland': '🇮🇪',
+      'ie': '🇮🇪',
+      '奥地利': '🇦🇹',
+      'austria': '🇦🇹',
+      'at': '🇦🇹',
+      '比利时': '🇧🇪',
+      'belgium': '🇧🇪',
+      'be': '🇧🇪',
+      '葡萄牙': '🇵🇹',
+      'portugal': '🇵🇹',
+      'pt': '🇵🇹',
+      '希腊': '🇬🇷',
+      'greece': '🇬🇷',
+      'gr': '🇬🇷',
+      '捷克': '🇨🇿',
+      'czech': '🇨🇿',
+      'cz': '🇨🇿',
+      '罗马尼亚': '🇷🇴',
+      'romania': '🇷🇴',
+      'ro': '🇷🇴',
+      '匈牙利': '🇭🇺',
+      'hungary': '🇭🇺',
+      'hu': '🇭🇺',
+      '保加利亚': '🇧🇬',
+      'bulgaria': '🇧🇬',
+      'bg': '🇧🇬',
+      '卢森堡': '🇱🇺',
+      'luxembourg': '🇱🇺',
+      'lu': '🇱🇺',
+      '冰岛': '🇮🇸',
+      'iceland': '🇮🇸',
+      'is': '🇮🇸',
+
+      // 大洋洲
+      '澳大利亚': '🇦🇺',
+      'australia': '🇦🇺',
+      'au': '🇦🇺',
+      '新西兰': '🇳🇿',
+      'new zealand': '🇳🇿',
+      'nz': '🇳🇿',
+
+      // 中东
+      '以色列': '🇮🇱',
+      'israel': '🇮🇱',
+      'il': '🇮🇱',
+      '阿联酋': '🇦🇪',
+      'uae': '🇦🇪',
+      'ae': '🇦🇪',
+      'dubai': '🇦🇪',
+      '迪拜': '🇦🇪',
+      '沙特': '🇸🇦',
+      'saudi': '🇸🇦',
+      'sa': '🇸🇦',
+
+      // 非洲
+      '南非': '🇿🇦',
+      'south africa': '🇿🇦',
+      'za': '🇿🇦',
+      '埃及': '🇪🇬',
+      'egypt': '🇪🇬',
+      'eg': '🇪🇬',
+    };
+
+    // 遍历映射查找匹配
+    for (final entry in countryFlags.entries) {
+      if (nameLower.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+
+    // 默认返回地球emoji
+    return '🌐';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final flag = _getCountryFlag(proxy.name);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        gradient: selected
-            ? LinearGradient(
-                colors: isDark
-                    ? [
-                        const Color(0xFF1E3A8A).withOpacity(0.6),
-                        const Color(0xFF1E40AF).withOpacity(0.4),
-                      ]
-                    : [
-                        const Color(0xFF3B82F6).withOpacity(0.15),
-                        const Color(0xFF60A5FA).withOpacity(0.1),
-                      ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
-            : null,
         color: selected
-            ? null
-            : (isDark ? Colors.grey[850] : Colors.white),
+            ? (isDark ? const Color(0xFF0EA5E9).withAlpha(25) : const Color(0xFF0EA5E9).withAlpha(15))
+            : (isDark ? const Color(0xFF1A1A1A) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: selected
-              ? const Color(0xFF3B82F6)
-              : (isDark ? Colors.grey[700]! : Colors.grey[200]!),
-          width: selected ? 2 : 1,
+              ? const Color(0xFF0EA5E9)
+              : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+          width: selected ? 1.5 : 1,
         ),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF3B82F6).withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: selected
+                ? const Color(0xFF0EA5E9).withAlpha(30)
+                : Colors.black.withAlpha(isDark ? 20 : 8),
+            blurRadius: selected ? 12 : 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onSelect,
-          onLongPress: () async {
+          onLongPress: () {
             showDialog(
               context: context,
               builder: (context) => AlertDialog(
@@ -87,29 +255,28 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                // 选中指示器
+                // 国旗emoji
                 Container(
-                  width: 4,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    gradient: selected
-                        ? LinearGradient(
-                            colors: [
-                              const Color(0xFF3B82F6),
-                              const Color(0xFF60A5FA),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          )
-                        : null,
-                    color: selected ? null : Colors.transparent,
+                    color: isDark ? Colors.grey.shade800.withAlpha(150) : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      flag,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontFamily: FontFamily.emoji,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 // 节点信息
                 Expanded(
                   child: Column(
@@ -119,23 +286,53 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
                       Text(
                         proxy.name,
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                         style: TextStyle(
                           fontFamily: FontFamily.emoji,
                           fontSize: 15,
                           fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                           color: selected
-                              ? (isDark ? Colors.white : Colors.black87)
-                              : (isDark ? Colors.grey[300] : Colors.grey[800]),
+                              ? const Color(0xFF0EA5E9)
+                              : (isDark ? Colors.grey.shade200 : Colors.grey.shade800),
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        proxy.type.label,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.grey[500] : Colors.grey[600],
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              proxy.type.label,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                              ),
+                            ),
+                          ),
+                          if (selected) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0EA5E9).withAlpha(25),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '已选择',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0EA5E9),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -145,41 +342,19 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: delayGradientColors(context, proxy.urlTestDelay),
+                      color: _getDelayColor(proxy.urlTestDelay).withAlpha(25),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _getDelayColor(proxy.urlTestDelay).withAlpha(50),
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: delayColor(context, proxy.urlTestDelay).withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          proxy.urlTestDelay > 65000 ? "×" : proxy.urlTestDelay.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (proxy.urlTestDelay <= 65000) ...[
-                          const SizedBox(width: 2),
-                          const Text(
-                            'ms',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ],
+                    child: Text(
+                      proxy.urlTestDelay > 65000 ? '超时' : '${proxy.urlTestDelay}ms',
+                      style: TextStyle(
+                        color: _getDelayColor(proxy.urlTestDelay),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
               ],
@@ -190,30 +365,11 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
     );
   }
 
-  Color delayColor(BuildContext context, int delay) {
-    if (Theme.of(context).brightness == Brightness.dark) {
-      return switch (delay) {
-        < 100 => const Color(0xFF10B981),
-        < 300 => const Color(0xFF22C55E),
-        < 800 => const Color(0xFFFBBF24),
-        < 1500 => const Color(0xFFF59E0B),
-        _ => const Color(0xFFEF4444)
-      };
-    }
-    return switch (delay) {
-      < 100 => const Color(0xFF059669),
-      < 300 => const Color(0xFF16A34A),
-      < 800 => const Color(0xFFF59E0B),
-      < 1500 => const Color(0xFFEA580C),
-      _ => const Color(0xFFDC2626)
-    };
-  }
-
-  List<Color> delayGradientColors(BuildContext context, int delay) {
-    final baseColor = delayColor(context, delay);
-    return [
-      baseColor,
-      Color.lerp(baseColor, Colors.black, 0.2)!,
-    ];
+  Color _getDelayColor(int delay) {
+    if (delay > 65000) return Colors.red.shade400;
+    if (delay < 100) return const Color(0xFF10B981);
+    if (delay < 300) return const Color(0xFF22C55E);
+    if (delay < 800) return const Color(0xFFF59E0B);
+    return const Color(0xFFEF4444);
   }
 }

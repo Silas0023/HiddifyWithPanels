@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/router.dart';
-
-// 退出菜单已隐藏，不再需要 LogoutDialog
-// import 'package:hiddify/features/panel/xboard/utils/logout_dialog.dart';
+import 'package:hiddify/features/panel/xboard/viewmodels/notice_viewmodel.dart';
 import 'package:hiddify/features/stats/widget/side_bar_stats_overview.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -23,53 +21,63 @@ class AdaptiveRootScaffold extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
+    final noticesAsync = ref.watch(noticeViewModelProvider);
+    final hasImportantNotices = noticesAsync.valueOrNull?.any((notice) => notice.tagsList.isNotEmpty) ?? false;
 
     final selectedIndex = getCurrentIndex(context);
 
     final destinations = [
       const NavigationDestination(
-        icon: Icon(FluentIcons.power_20_filled),
-        label: '连接VPN',
+        icon: Icon(FluentIcons.home_24_regular),
+        selectedIcon: Icon(FluentIcons.home_24_filled),
+        label: '首页',
       ),
       const NavigationDestination(
-        icon: Icon(FluentIcons.filter_20_filled),
-        label: '区域选择',
+        icon: Icon(FluentIcons.globe_24_regular),
+        selectedIcon: Icon(FluentIcons.globe_24_filled),
+        label: '区域',
       ),
-      const NavigationDestination(
-        icon: Icon(FluentIcons.apps_24_filled),
-        label: '应用中心',
-      ),
+      // 隐藏应用中心
+      // const NavigationDestination(
+      //   icon: Icon(FluentIcons.apps_24_regular),
+      //   selectedIcon: Icon(FluentIcons.apps_24_filled),
+      //   label: '应用中心',
+      // ),
       NavigationDestination(
-        icon: const Icon(FluentIcons.money_24_filled),
+        icon: const Icon(FluentIcons.cart_24_regular),
+        selectedIcon: const Icon(FluentIcons.cart_24_filled),
         label: t.purchase.pageTitle,
       ),
       NavigationDestination(
-        icon: const Icon(FluentIcons.person_20_filled),
+        icon: const Icon(FluentIcons.person_24_regular),
+        selectedIcon: const Icon(FluentIcons.person_24_filled),
         label: t.userInfo.pageTitle,
       ),
       NavigationDestination(
-        icon: const Icon(FluentIcons.settings_20_filled),
+        icon: hasImportantNotices
+            ? const Badge(
+                smallSize: 8,
+                child: Icon(FluentIcons.alert_24_regular),
+              )
+            : const Icon(FluentIcons.alert_24_regular),
+        selectedIcon: hasImportantNotices
+            ? const Badge(
+                smallSize: 8,
+                child: Icon(FluentIcons.alert_24_filled),
+              )
+            : const Icon(FluentIcons.alert_24_filled),
+        label: '通知',
+      ),
+      NavigationDestination(
+        icon: const Icon(FluentIcons.settings_24_regular),
+        selectedIcon: const Icon(FluentIcons.settings_24_filled),
         label: t.settings.pageTitle,
       ),
       NavigationDestination(
-        icon: const Icon(FluentIcons.box_edit_20_filled),
+        icon: const Icon(FluentIcons.options_24_regular),
+        selectedIcon: const Icon(FluentIcons.options_24_filled),
         label: t.config.pageTitle,
       ),
-      // 隐藏日志菜单
-      // NavigationDestination(
-      //   icon: const Icon(FluentIcons.document_text_20_filled),
-      //   label: t.logs.pageTitle,
-      // ),
-      // 隐藏关于菜单
-      // NavigationDestination(
-      //   icon: const Icon(FluentIcons.info_20_filled),
-      //   label: t.about.pageTitle,
-      // ),
-      // 隐藏退出菜单
-      // const NavigationDestination(
-      //   icon: Icon(FluentIcons.sign_out_20_filled),
-      //   label: '退出',
-      // ),
     ];
 
     return _CustomAdaptiveScaffold(
@@ -183,14 +191,92 @@ class _CustomAdaptiveScaffold extends HookConsumerWidget {
           },
         ),
       ),
-      // AdaptiveLayout bottom sheet has accessibility issues
       bottomNavigationBar: useBottomSheet && Breakpoints.small.isActive(context)
-          ? NavigationBar(
-              selectedIndex: selectedWithOffset(bottomDestinationRange) ?? 0,
-              destinations: destinationsSlice(bottomDestinationRange),
-              onDestinationSelected: (index) => selectWithOffset(index, bottomDestinationRange),
-            )
+          ? _buildCustomBottomNav(context, ref)
           : null,
+    );
+  }
+
+  Widget _buildCustomBottomNav(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bottomDests = destinationsSlice(bottomDestinationRange);
+    final currentIndex = selectedWithOffset(bottomDestinationRange) ?? 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 40 : 15),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(bottomDests.length, (index) {
+              final dest = bottomDests[index];
+              final isSelected = index == currentIndex;
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => selectWithOffset(index, bottomDestinationRange),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 图标容器
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF0EA5E9).withAlpha(25)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: IconTheme(
+                            data: IconThemeData(
+                              size: 24,
+                              color: isSelected
+                                  ? const Color(0xFF0EA5E9)
+                                  : (isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                            ),
+                            child: isSelected
+                                ? (dest.selectedIcon ?? dest.icon)
+                                : dest.icon,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // 标签
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFF0EA5E9)
+                                : (isDark ? Colors.grey.shade500 : Colors.grey.shade600),
+                          ),
+                          child: Text(dest.label),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
     );
   }
 }

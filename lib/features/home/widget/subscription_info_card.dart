@@ -522,52 +522,30 @@ class _SubscriptionInfoCardState extends ConsumerState<SubscriptionInfoCard> {
                       ],
                     ),
                   ),
-                  // 剩余天数标签
-                  if (remainingDays != null) ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: expiryColor.withValues(alpha:0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: expiryColor),
-                      ),
-                      child: Text(
-                        isExpired
-                            ? '已过期'
-                            : remainingDays == 0
-                                ? '今天到期'
-                                : '$remainingDays 天',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: expiryColor,
-                        ),
+                  // 剩余时间标签
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: remainingDays == null
+                          ? Colors.purple.withValues(alpha: 0.1)
+                          : expiryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: remainingDays == null ? Colors.purple : expiryColor,
                       ),
                     ),
-                  ] else ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withValues(alpha:0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.purple),
-                      ),
-                      child: const Text(
-                        '永久',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.purple,
-                        ),
+                    child: Text(
+                      userInfo.remainingTimeText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: remainingDays == null ? Colors.purple : expiryColor,
                       ),
                     ),
-                  ],
+                  ),
                 ],
               ),
               const SizedBox(height: 12),

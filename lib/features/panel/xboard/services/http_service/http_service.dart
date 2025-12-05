@@ -2,14 +2,35 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:hiddify/features/panel/xboard/services/http_service/aes_utils.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/domain_service.dart';
 import 'package:http/http.dart' as http;
 
 class HttpService {
-  static String baseUrl = 'https://aa18.de'; // 替换为你的实际基础 URL
+  static String baseUrl = 'https://test.23687.xyz'; // 替换为你的实际基础 URL
   // 初始化服务并设置动态域名
   static Future<void> initialize() async {
     baseUrl = await DomainService.fetchValidDomain();
+  }
+
+  /// 处理响应体，自动检测并解密加密的响应
+  Map<String, dynamic> _processResponseBody(String responseBody) {
+    // 使用AesUtils处理响应，自动检测是否加密
+    try {
+      final result = AesUtils.processResponse(responseBody);
+      if (kDebugMode) {
+        print('========== Response Processed ==========');
+        print('Decrypted/Parsed Result: $result');
+        print('=========================================');
+      }
+      return result;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error processing response: $e');
+      }
+      // 如果处理失败，尝试直接解析
+      return json.decode(responseBody) as Map<String, dynamic>;
+    }
   }
 
   // 统一的 GET 请求方法
@@ -43,7 +64,7 @@ class HttpService {
         print('==========================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return _processResponseBody(response.body);
       } else {
         throw Exception("GET request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -54,8 +75,6 @@ class HttpService {
       rethrow;
     }
   }
-
-  // 统一的 POST 请求方法
 
   // 统一的 POST 请求方法，增加 requiresHeaders 开关
   Future<Map<String, dynamic>> postRequest(
@@ -98,7 +117,7 @@ class HttpService {
         print('===========================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return _processResponseBody(response.body);
       } else {
         throw Exception("POST request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -143,7 +162,7 @@ class HttpService {
         print('========================================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return _processResponseBody(response.body);
       } else {
         throw Exception("POST request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }
@@ -198,7 +217,7 @@ class HttpService {
         print('================================================');
       }
       if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+        return _processResponseBody(response.body);
       } else {
         throw Exception("POST form request to $baseUrl$endpoint failed: ${response.statusCode}, ${response.body}");
       }

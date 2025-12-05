@@ -39,14 +39,15 @@ class AddProfile extends _$AddProfile with AppLogger {
         final notification = ref.read(inAppNotificationControllerProvider);
         switch (next) {
           case AsyncData(value: final _?):
-            notification.showSuccessToast(t.profile.save.successMsg);
+            // notification.showSuccessToast(t.profile.save.successMsg);
+            print(t.profile.save.successMsg);
           case AsyncError(:final error):
             if (error case ProfileInvalidUrlFailure()) {
               notification.showErrorToast(t.failure.profiles.invalidUrl);
             } else {
-              notification.showErrorDialog(
-                t.presentError(error, action: t.profile.add.failureMsg),
-              );
+              // notification.showErrorDialog(
+              //   t.presentError(error, action: t.profile.add.failureMsg),
+              // );
             }
         }
       },
@@ -71,7 +72,7 @@ class AddProfile extends _$AddProfile with AppLogger {
           print('[AddProfile] 解析后的link.url: ${link.url}');
           loggy.debug("adding profile, url:(profile_notifier) [${link.url}]");
           task = _profilesRepo.addByUrl(
-            link.url,  // 使用实际的URL而不是硬编码的
+            link.url, // 使用实际的URL而不是硬编码的
             markAsActive: markAsActive,
             cancelToken: _cancelToken = CancelToken(),
           );
@@ -167,9 +168,9 @@ class UpdateProfile extends _$UpdateProfile with AppLogger {
           case AsyncData(value: final _?):
             notification.showSuccessToast(t.profile.update.successMsg);
           case AsyncError(:final error):
-            notification.showErrorDialog(
-              t.presentError(error, action: t.profile.update.failureMsg),
-            );
+          // notification.showErrorDialog(
+          //   t.presentError(error, action: t.profile.update.failureMsg),
+          // );
         }
       },
     );

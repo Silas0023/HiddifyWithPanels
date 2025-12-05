@@ -84,9 +84,11 @@ GoRouter router(RouterRef ref) {
 final tabLocations = [
   const HomeRoute().location,
   const ProxiesRoute().location,
-  const AppCenterRoute().location,
+  // 隐藏应用中心
+  // const AppCenterRoute().location,
   const PurchaseRoute().location,
   const UserInfoRoute().location,
+  const NoticeRoute().location,
   const SettingsRoute().location,
   const ConfigOptionsRoute().location,
   const LogsOverviewRoute().location,

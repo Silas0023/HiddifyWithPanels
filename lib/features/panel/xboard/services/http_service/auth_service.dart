@@ -37,19 +37,19 @@ class AuthService {
   // 发送短信验证码
   Future<Map<String, dynamic>> sendSmsCode(String phone) async {
     return await _httpService.getRequest(
-      "/apiv2/clickPass/sendSms?phone=$phone",
+      "/hjapi/appApi/sendCheckCode?phone=$phone",
     );
   }
 
   // 手机号验证码登录
   Future<Map<String, dynamic>> loginWithPhone(String phone, String code) async {
-    return await _httpService.postFormRequest(
-      "/apiv2/clickPass/phoneLogin",
+    return await _httpService.postRequest(
+      "/hjapi/appApi/login",
       {
-        "phone": phone,
+        "phoneNumber": phone,
         "smsCode": code,
-        "isOldUser": "false",
       },
+      requiresHeaders: false,
     );
   }
 

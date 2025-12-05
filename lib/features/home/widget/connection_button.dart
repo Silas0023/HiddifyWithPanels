@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
@@ -12,7 +14,10 @@ import 'package:hiddify/features/config_option/notifier/config_option_notifier.d
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/connection/widget/experimental_feature_notice.dart';
+import 'package:hiddify/features/panel/xboard/services/subscription.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/user_info_viewmodel.dart';
+import 'package:hiddify/features/profile/data/profile_data_providers.dart';
+import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
 import 'package:hiddify/gen/assets.gen.dart';
@@ -198,14 +203,406 @@ class ConnectionButton extends HookConsumerWidget {
       return false; // 未过期
     }
 
+    // 显示需要购买套餐的对话框
+    void showPurchaseRequiredDialog() {
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 警告图标
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFF59E0B),
+                      Color(0xFFD97706),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  FluentIcons.shopping_bag_24_filled,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 标题
+              const Text(
+                '需要购买套餐',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 描述
+              const Text(
+                '您当前没有可用的套餐，请购买套餐后再连接VPN',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black54,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 按钮
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        const PurchaseRoute().push(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(FluentIcons.shopping_bag_24_filled, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            '购买套餐',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '取消',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 显示没有配置文件的对话框
+    void showNoProfileDialog() {
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 图标
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF6366F1),
+                      Color(0xFF4F46E5),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  FluentIcons.document_arrow_down_24_filled,
+                  color: Colors.white,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 标题
+              const Text(
+                '没有配置文件',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // 描述
+              const Text(
+                '请先购买套餐获取订阅配置，然后再连接VPN',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black54,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 按钮
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        const PurchaseRoute().push(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(FluentIcons.shopping_bag_24_filled, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            '购买套餐',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.grey[600],
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '取消',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 导入或更新配置文件并检查403错误
+    Future<bool> importOrUpdateProfile() async {
+      try {
+        final activeProfile = await ref.read(activeProfileProvider.future);
+
+        // 如果没有活动配置，先尝试导入订阅
+        if (activeProfile == null) {
+          if (kDebugMode) {
+            print('[ConnectionButton] 没有活动的配置文件，尝试导入订阅...');
+          }
+
+          try {
+            // 尝试导入订阅
+            if (!context.mounted) return false;
+            await Subscription.updateSubscription(context, ref);
+
+            // 刷新 activeProfileProvider 以获取最新状态
+            ref.invalidate(activeProfileProvider);
+
+            // 等待一小段时间让 stream 发出新值
+            await Future.delayed(const Duration(milliseconds: 500));
+
+            // 检查导入后是否有活动配置
+            final newActiveProfile = await ref.read(activeProfileProvider.future);
+            if (newActiveProfile == null) {
+              if (kDebugMode) {
+                print('[ConnectionButton] 导入后仍然没有配置文件');
+              }
+              showNoProfileDialog();
+              return false;
+            }
+
+            if (kDebugMode) {
+              print('[ConnectionButton] 订阅导入成功: ${newActiveProfile.name}');
+            }
+            return true;
+          } catch (importError) {
+            if (kDebugMode) {
+              print('[ConnectionButton] 导入订阅失败: $importError');
+            }
+
+            final errorStr = importError.toString().toLowerCase();
+            if (errorStr.contains('403')) {
+              showPurchaseRequiredDialog();
+              return false;
+            }
+
+            // 显示没有配置文件的提示
+            showNoProfileDialog();
+            return false;
+          }
+        }
+
+        // 已有配置，只有远程配置才需要更新
+        if (activeProfile is! RemoteProfileEntity) {
+          return true; // 本地配置不需要更新
+        }
+
+        if (kDebugMode) {
+          print('[ConnectionButton] 开始更新配置文件: ${activeProfile.name}');
+        }
+
+        // 尝试更新订阅配置
+        final profileRepository = await ref.read(profileRepositoryProvider.future);
+        final result = await profileRepository.updateSubscription(activeProfile).run();
+
+        return result.fold(
+          (failure) {
+            if (kDebugMode) {
+              print('[ConnectionButton] 更新配置文件失败: $failure');
+            }
+
+            // 检查错误消息中是否包含403
+            final errorStr = failure.toString().toLowerCase();
+            if (errorStr.contains('403')) {
+              if (kDebugMode) {
+                print('[ConnectionButton] 错误消息包含403，需要购买套餐');
+              }
+              showPurchaseRequiredDialog();
+              return false;
+            }
+
+            // 其他错误，继续尝试连接（可能是网络问题，但本地有配置）
+            return true;
+          },
+          (_) {
+            if (kDebugMode) {
+              print('[ConnectionButton] 配置文件更新成功');
+            }
+            // 刷新 activeProfileProvider 以确保使用最新配置
+            ref.invalidate(activeProfileProvider);
+            return true;
+          },
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          print('[ConnectionButton] 更新配置文件异常: $e');
+        }
+
+        // 检查是否是403错误
+        if (e is DioException && e.response?.statusCode == 403) {
+          showPurchaseRequiredDialog();
+          return false;
+        }
+
+        final errorStr = e.toString().toLowerCase();
+        if (errorStr.contains('403')) {
+          showPurchaseRequiredDialog();
+          return false;
+        }
+
+        // 其他错误继续尝试连接
+        return true;
+      }
+    }
+
     return _ConnectionButton(
       onTap: switch (connectionStatus) {
         AsyncData(value: Disconnected()) || AsyncError() => () async {
+            if (kDebugMode) {
+              print('[ConnectionButton] 连接按钮被点击，开始处理...');
+            }
             // 检查订阅是否过期
             if (await checkSubscriptionExpired()) {
+              if (kDebugMode) {
+                print('[ConnectionButton] 订阅已过期，终止连接');
+              }
               return;
             }
+            // 导入或更新配置文件并检查403错误
+            if (kDebugMode) {
+              print('[ConnectionButton] 开始导入或更新配置文件...');
+            }
+            if (!await importOrUpdateProfile()) {
+              if (kDebugMode) {
+                print('[ConnectionButton] 配置文件导入/更新失败，终止连接');
+              }
+              return;
+            }
+            if (kDebugMode) {
+              print('[ConnectionButton] 配置文件导入/更新成功，准备连接...');
+            }
             if (await showExperimentalNotice()) {
+              if (kDebugMode) {
+                print('[ConnectionButton] 调用 toggleConnection()');
+              }
               return await ref.read(connectionNotifierProvider.notifier).toggleConnection();
             }
           },
@@ -434,11 +831,11 @@ class _SplashStyleButton extends StatelessWidget {
     }
 
     if (isConnected) {
-      // 已连接：紫色混合发光
-      return const Color(0xFFb82bf7);
+      // 已连接：蓝色发光
+      return const Color(0xFF0EA5E9);
     } else {
-      // 未连接：深紫色混合发光
-      return const Color(0xFF8f21c3);
+      // 未连接：深蓝色发光
+      return const Color(0xFF0284C7);
     }
   }
 
@@ -456,23 +853,23 @@ class _SplashStyleButton extends StatelessWidget {
     }
 
     if (isConnected) {
-      // 已连接：紫色渐变 - 亮紫到深紫
+      // 已连接：蓝色渐变
       return const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFFda22ff), // 亮紫色
-          Color(0xFF9733ee), // 深紫色
+          Color(0xFF38BDF8), // 亮蓝色
+          Color(0xFF0EA5E9), // 天蓝色
         ],
       );
     } else {
-      // 未连接：深色版紫色渐变
+      // 未连接：深蓝色渐变
       return const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Color(0xFFa81bcc), // 深亮紫
-          Color(0xFF7628ba), // 更深紫
+          Color(0xFF0EA5E9), // 天蓝
+          Color(0xFF0284C7), // 深蓝
         ],
       );
     }

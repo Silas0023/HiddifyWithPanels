@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:hiddify/features/customer_support/intercom_service.dart';
 
 class CustomerSupportButton extends StatelessWidget {
   const CustomerSupportButton({super.key});
@@ -11,8 +11,8 @@ class CustomerSupportButton extends StatelessWidget {
       bottom: 80,
       child: FloatingActionButton(
         onPressed: () {
-          // 导航到客服页面
-          context.push('/customer-support');
+          // 打开 Intercom 客服
+          IntercomService.displayMessenger();
         },
         backgroundColor: const Color(0xFF0EA5E9),
         heroTag: 'customer_support_fab',

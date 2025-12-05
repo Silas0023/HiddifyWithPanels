@@ -32,13 +32,13 @@ class ProfilesOverviewModal extends HookConsumerWidget {
           final t = ref.read(translationsProvider);
           final notification = ref.read(inAppNotificationControllerProvider);
           if (value.success) {
-            notification.showSuccessToast(
-              t.profile.update.namedSuccessMsg(name: value.name),
-            );
+            // notification.showSuccessToast(
+            //   t.profile.update.namedSuccessMsg(name: value.name),
+            // );
           } else {
-            notification.showErrorToast(
-              t.profile.update.namedFailureMsg(name: value.name),
-            );
+            // notification.showErrorToast(
+            //   t.profile.update.namedFailureMsg(name: value.name),
+            // );
           }
         }
       },
@@ -123,8 +123,7 @@ class ProfilesSortModal extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final sortNotifier =
-        ref.watch(profilesOverviewSortNotifierProvider.notifier);
+    final sortNotifier = ref.watch(profilesOverviewSortNotifierProvider.notifier);
 
     return AlertDialog(
       title: Text(t.general.sortBy),
@@ -137,8 +136,7 @@ class ProfilesSortModal extends HookConsumerWidget {
                 ...ProfilesSort.values.map(
                   (e) {
                     final selected = sort.by == e;
-                    final double arrowTurn =
-                        sort.mode == SortMode.ascending ? 0 : 0.5;
+                    final double arrowTurn = sort.mode == SortMode.ascending ? 0 : 0.5;
 
                     return ListTile(
                       title: Text(e.present(t)),

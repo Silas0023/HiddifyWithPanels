@@ -1,18 +1,12 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_adaptive_scaffold/flutter_adaptive_scaffold.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import 'package:hiddify/core/localization/translations.dart';
-import 'package:hiddify/features/common/adaptive_root_scaffold.dart';
 import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
-import 'package:hiddify/features/panel/xboard/models/user_info_model.dart';
-import 'package:hiddify/features/panel/xboard/services/future_provider.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/purchase_viewmodel.dart';
-
 import 'package:hiddify/features/panel/xboard/views/components/dialog/purchase_details_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:intl/intl.dart';
 
 // 使用 ChangeNotifierProvider（不带 autoDispose）保持数据缓存
 final purchaseViewModelProvider = ChangeNotifierProvider((ref) {
@@ -29,7 +23,22 @@ class PurchasePage extends ConsumerStatefulWidget {
   _PurchasePageState createState() => _PurchasePageState();
 }
 
-class _PurchasePageState extends ConsumerState<PurchasePage> {
+class _PurchasePageState extends ConsumerState<PurchasePage> with SingleTickerProviderStateMixin {
+  TabController? _tabController;
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  void _initTabController(int length) {
+    if (_tabController == null || _tabController!.length != length) {
+      _tabController?.dispose();
+      _tabController = TabController(length: length, vsync: this);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
@@ -37,389 +46,20 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final isSmallScreen = Breakpoints.small.isActive(context);
-
     return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: isDark ? Colors.grey[850] : Colors.white,
-        centerTitle: true,
-        // 在小窗口时显示左上角菜单按钮
-        leading: isSmallScreen
-            ? Builder(
-                builder: (context) => IconButton(
-                  icon: Icon(
-                    Icons.menu,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                  tooltip: '菜单',
-                  onPressed: () {
-                    RootScaffold.stateKey.currentState?.openDrawer();
-                  },
-                ),
-              )
-            : null,
-        title: Text(
-          t.purchase.pageTitle,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              FluentIcons.arrow_sync_24_regular,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            onPressed: () {
-              // 手动刷新套餐数据
-              ref.read(purchaseViewModelProvider).fetchPlans();
-            },
-            tooltip: '刷新',
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await ref.read(purchaseViewModelProvider).fetchPlans();
-        },
-        child: Builder(
-          builder: (context) {
-            if (viewModel.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (viewModel.errorMessage != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      FluentIcons.error_circle_24_regular,
-                      size: 64,
-                      color: Colors.red[300],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      t.purchase.fetchPlansError,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      viewModel.errorMessage!,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              );
-            } else if (viewModel.plans.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      FluentIcons.box_24_regular,
-                      size: 64,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      t.purchase.noPlans,
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              // 获取用户信息
-              final userInfoAsync = ref.watch(userTokenInfoProvider);
-
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  // 根据屏幕宽度计算列数和卡片尺寸
-                  int crossAxisCount;
-                  double childAspectRatio;
-
-                  if (constraints.maxWidth > 1400) {
-                    crossAxisCount = 3; // 超大屏幕：3列
-                    childAspectRatio = 0.65; // 增加高度
-                  } else if (constraints.maxWidth > 900) {
-                    crossAxisCount = 2; // 中等屏幕：2列
-                    childAspectRatio = 0.6; // 增加高度
-                  } else {
-                    crossAxisCount = 1; // 小屏幕：1列
-                    childAspectRatio = 0.75; // 增加高度
-                  }
-
-                  return CustomScrollView(
-                    slivers: [
-                      // 用户信息卡片
-                      SliverToBoxAdapter(
-                        child: userInfoAsync.when(
-                          data: (userInfo) {
-                            if (userInfo == null) return const SizedBox.shrink();
-
-                            // 通过 planId 找到对应的套餐名称
-                            final currentPlan = viewModel.plans.firstWhere(
-                              (plan) => plan.id == userInfo.planId,
-                              orElse: () => Plan(
-                                id: 0,
-                                groupId: 0,
-                                transferEnable: 0,
-                                name: '免费套餐',
-                                speedLimit: 0,
-                                show: true,
-                                content: '',
-                              ),
-                            );
-
-                            return _buildUserInfoCard(
-                              userInfo,
-                              currentPlan,
-                              isDark,
-                              t,
-                            );
-                          },
-                          loading: () => _buildUserInfoCardSkeleton(isDark),
-                          error: (_, __) => const SizedBox.shrink(),
-                        ),
-                      ),
-                      // 套餐网格
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-                        sliver: SliverGrid(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            childAspectRatio: childAspectRatio,
-                            crossAxisSpacing: 20,
-                            mainAxisSpacing: 24,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final plan = viewModel.plans[index];
-                              return _buildPlanCard(plan, t, context, ref, theme, index);
-                            },
-                            childCount: viewModel.plans.length,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            }
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlanCard(
-    Plan plan,
-    Translations t,
-    BuildContext context,
-    WidgetRef ref,
-    ThemeData theme,
-    int index,
-  ) {
-    final isDark = theme.brightness == Brightness.dark;
-
-    // 为每个卡片分配不同的渐变色
-    final gradients = [
-      [Colors.blue[700]!, Colors.blue[500]!],
-      [Colors.purple[700]!, Colors.purple[500]!],
-      [Colors.orange[700]!, Colors.orange[500]!],
-      [Colors.teal[700]!, Colors.teal[500]!],
-      [Colors.pink[700]!, Colors.pink[500]!],
-    ];
-    final gradientColors = gradients[index % gradients.length];
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: gradientColors[0].withOpacity(0.25),
-            blurRadius: 24,
-            spreadRadius: 2,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Card(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        clipBehavior: Clip.antiAlias,
+      backgroundColor: isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF5F5F7),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 顶部渐变色头部
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: gradientColors,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          plan.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          FluentIcons.star_24_filled,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // 价格信息
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      if (plan.halfYearPrice != null && plan.halfYearPrice! > 0)
-                        Text(
-                          '¥${plan.halfYearPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.0,
-                          ),
-                        )
-                      else if (plan.monthPrice != null && plan.monthPrice! > 0)
-                        Text(
-                          '¥${plan.monthPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.0,
-                          ),
-                        )
-                      else if (plan.quarterPrice != null && plan.quarterPrice! > 0)
-                        Text(
-                          '¥${plan.quarterPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.0,
-                          ),
-                        )
-                      else if (plan.yearPrice != null && plan.yearPrice! > 0)
-                        Text(
-                          '¥${plan.yearPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            height: 1.0,
-                          ),
-                        ),
-                      const SizedBox(width: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          t.purchase.rmb,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // 套餐详情内容
+            // 顶部标题区域
+            _buildHeader(context, isDark, t),
+            // 内容区域
             Expanded(
-              child: Container(
-                color: isDark ? Colors.grey[800] : Colors.white,
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: _buildModernStyledContent(
-                          plan.content ?? t.purchase.noData,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // 订阅按钮
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          showPurchaseDialog(context, plan, t, ref);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: gradientColors[0],
-                          foregroundColor: Colors.white,
-                          elevation: 2,
-                          shadowColor: gradientColors[0].withOpacity(0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              t.purchase.subscribe,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              FluentIcons.arrow_right_24_filled,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await ref.read(purchaseViewModelProvider).fetchPlans();
+                },
+                child: _buildContent(context, isDark, t, viewModel, theme),
               ),
             ),
           ],
@@ -428,408 +68,443 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     );
   }
 
-  Widget _buildModernStyledContent(String content) {
-    final lines = content.split('\n').where((line) => line.trim().isNotEmpty);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((line) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Row(
+  Widget _buildHeader(BuildContext context, bool isDark, Translations t) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      child: Row(
+        children: [
+          // 标题图标
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              FluentIcons.cart_24_filled,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 标题
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                margin: const EdgeInsets.only(top: 7),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.blue[400],
-                  shape: BoxShape.circle,
+              Text(
+                t.purchase.pageTitle,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  line.trim(),
-                  style: const TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w400,
-                    height: 1.5,
-                    letterSpacing: 0.2,
-                  ),
+              Text(
+                '选择适合您的套餐',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
                 ),
               ),
             ],
           ),
-        );
-      }).toList(),
+          const Spacer(),
+          // 刷新按钮
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              ref.read(purchaseViewModelProvider).fetchPlans();
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                ),
+              ),
+              child: const Icon(
+                FluentIcons.arrow_sync_24_regular,
+                size: 20,
+                color: Color(0xFF10B981),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildUserInfoCard(
-    UserInfo userInfo,
-    Plan currentPlan,
+  Widget _buildContent(
+    BuildContext context,
     bool isDark,
     Translations t,
+    PurchaseViewModel viewModel,
+    ThemeData theme,
   ) {
-    // 格式化过期时间
-    String formatExpireTime(int? expiredAt) {
-      if (expiredAt == null) return '永久有效';
-      final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000);
-      final now = DateTime.now();
-      final difference = expireDate.difference(now);
-
-      if (difference.inDays < 0) {
-        return '已过期';
-      } else if (difference.inDays == 0) {
-        return '今天过期';
-      } else if (difference.inDays == 1) {
-        return '明天过期';
-      } else {
-        final formatter = DateFormat('yyyy年MM月dd日');
-        return formatter.format(expireDate);
-      }
+    if (viewModel.isLoading) {
+      return _buildLoadingState(isDark);
     }
 
-    // 获取剩余天数
-    int? getRemainingDays(int? expiredAt) {
-      if (expiredAt == null) return null;
-      final expireDate = DateTime.fromMillisecondsSinceEpoch(expiredAt * 1000);
-      final now = DateTime.now();
-      final difference = expireDate.difference(now);
-      return difference.inDays;
+    if (viewModel.errorMessage != null) {
+      return _buildErrorState(isDark, t, viewModel.errorMessage!);
     }
 
-    final remainingDays = getRemainingDays(userInfo.expiredAt);
-    final isExpired = remainingDays != null && remainingDays < 0;
-    final isExpiringSoon = remainingDays != null && remainingDays >= 0 && remainingDays <= 7;
+    if (viewModel.categories.isEmpty) {
+      return _buildEmptyState(isDark, t);
+    }
+
+    // 初始化 TabController
+    _initTabController(viewModel.categories.length);
+
+    return Column(
+      children: [
+        // 分类标签
+        _buildCategoryTabs(isDark, viewModel.categories),
+        // 套餐列表
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: viewModel.categories.map((category) {
+              final plans = viewModel.groupedPlans[category] ?? [];
+              return _buildPlanList(context, isDark, t, plans, theme);
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryTabs(bool isDark, List<String> categories) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicator: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10B981), Color(0xFF059669)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorPadding: const EdgeInsets.all(4),
+        labelColor: Colors.white,
+        unselectedLabelColor: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        dividerColor: Colors.transparent,
+        tabs: categories.map((category) => Tab(text: category)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPlanList(
+    BuildContext context,
+    bool isDark,
+    Translations t,
+    List<Plan> plans,
+    ThemeData theme,
+  ) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8, bottom: 100),
+      itemCount: plans.length,
+      itemBuilder: (context, index) {
+        final plan = plans[index];
+        return _buildPlanCard(context, isDark, t, plan, theme, index);
+      },
+    );
+  }
+
+  Widget _buildPlanCard(
+    BuildContext context,
+    bool isDark,
+    Translations t,
+    Plan plan,
+    ThemeData theme,
+    int index,
+  ) {
+    // 为每个卡片分配不同的渐变色
+    final gradients = [
+      [const Color(0xFF3B82F6), const Color(0xFF2563EB)],
+      [const Color(0xFF8B5CF6), const Color(0xFF7C3AED)],
+      [const Color(0xFFF59E0B), const Color(0xFFD97706)],
+      [const Color(0xFF10B981), const Color(0xFF059669)],
+    ];
+    final gradientColors = gradients[index % gradients.length];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF1E3A5F),
-                  const Color(0xFF0D2847),
-                ]
-              : [
-                  const Color(0xFFEFF6FF),
-                  const Color(0xFFDBEAFE),
-                ],
-        ),
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : const Color(0xFF93C5FD),
-          width: 1.5,
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : const Color(0xFF3B82F6)).withOpacity(0.15),
+            color: gradientColors[0].withValues(alpha: 0.1),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题行
-            Row(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            showPurchaseDialog(context, plan, t, ref);
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF3B82F6),
-                        Color(0xFF2563EB),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    FluentIcons.person_24_filled,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '当前套餐',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? Colors.white.withOpacity(0.7)
-                              : const Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        currentPlan.name,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : const Color(0xFF1E293B),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // 过期时间信息
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: (isDark ? Colors.white : Colors.black).withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isExpired
-                        ? FluentIcons.warning_24_filled
-                        : isExpiringSoon
-                            ? FluentIcons.clock_alarm_24_filled
-                            : FluentIcons.calendar_checkmark_24_filled,
-                    color: isExpired
-                        ? Colors.red[400]
-                        : isExpiringSoon
-                            ? Colors.orange[400]
-                            : (isDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6)),
-                    size: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '过期时间',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? Colors.white.withOpacity(0.6)
-                                : const Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          formatExpireTime(userInfo.expiredAt),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: isExpired
-                                ? Colors.red[400]
-                                : isExpiringSoon
-                                    ? Colors.orange[400]
-                                    : (isDark ? Colors.white : const Color(0xFF1E293B)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 剩余天数标签
-                  if (remainingDays != null && remainingDays >= 0)
+                // 顶部：套餐名称和价格
+                Row(
+                  children: [
+                    // 套餐图标
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
-                        color: isExpiringSoon
-                            ? Colors.orange[400]
-                            : const Color(0xFF10B981),
-                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(colors: gradientColors),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        FluentIcons.gift_card_24_filled,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    // 套餐名称
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            plan.name,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          if (plan.tag != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: gradientColors[0].withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                plan.tag!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: gradientColors[0],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // 价格
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: gradientColors),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '剩余 $remainingDays 天',
+                        '¥${plan.currentPrice}',
                         style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
                     ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 骨架屏：用户信息卡片加载状态
-  Widget _buildUserInfoCardSkeleton(bool isDark) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF1E3A5F).withValues(alpha: 0.3),
-                  const Color(0xFF0D2847).withValues(alpha: 0.3),
-                ]
-              : [
-                  const Color(0xFFEFF6FF).withValues(alpha: 0.5),
-                  const Color(0xFFDBEAFE).withValues(alpha: 0.5),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : const Color(0xFF93C5FD).withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题行骨架
-            Row(
-              children: [
-                // 图标骨架
-                _buildShimmerBox(
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  isDark: isDark,
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // "当前套餐" 文字骨架
-                      _buildShimmerBox(
-                        width: 80,
-                        height: 14,
-                        borderRadius: 4,
-                        isDark: isDark,
+                // 套餐内容
+                if (plan.content != null && plan.content!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade800.withValues(alpha: 0.5) : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _formatContent(plan.content!),
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.6,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                       ),
-                      const SizedBox(height: 8),
-                      // 套餐名称骨架
-                      _buildShimmerBox(
-                        width: 150,
-                        height: 20,
-                        borderRadius: 4,
-                        isDark: isDark,
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+                // 购买按钮
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      showPurchaseDialog(context, plan, t, ref);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: gradientColors[0],
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          t.purchase.subscribe,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(FluentIcons.arrow_right_24_filled, size: 18),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // 过期时间信息骨架
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  // 图标骨架
-                  _buildShimmerBox(
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // "过期时间" 文字骨架
-                        _buildShimmerBox(
-                          width: 70,
-                          height: 13,
-                          borderRadius: 4,
-                          isDark: isDark,
-                        ),
-                        const SizedBox(height: 6),
-                        // 日期骨架
-                        _buildShimmerBox(
-                          width: 120,
-                          height: 16,
-                          borderRadius: 4,
-                          isDark: isDark,
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 剩余天数标签骨架
-                  _buildShimmerBox(
-                    width: 80,
-                    height: 28,
-                    borderRadius: 20,
-                    isDark: isDark,
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // 骨架屏基础组件：带动画的灰色占位框
-  Widget _buildShimmerBox({
-    required double width,
-    required double height,
-    required double borderRadius,
-    required bool isDark,
-  }) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.3, end: 0.7),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: (isDark ? Colors.white : Colors.grey)
-                .withValues(alpha: value),
-            borderRadius: BorderRadius.circular(borderRadius),
+  String _formatContent(String content) {
+    // 移除 markdown 格式，提取纯文本
+    return content
+        .replaceAll(RegExp('\\*\\*'), '')
+        .replaceAll(RegExp('- '), '• ')
+        .trim();
+  }
+
+  Widget _buildEmptyState(bool isDark, Translations t) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              FluentIcons.box_24_regular,
+              size: 40,
+              color: Colors.grey.shade400,
+            ),
           ),
-        );
-      },
-      onEnd: () {
-        // 动画结束后反向播放，创建呼吸效果
-      },
+          const SizedBox(height: 16),
+          Text(
+            t.purchase.noPlans,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(bool isDark, Translations t, String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              FluentIcons.error_circle_24_regular,
+              size: 40,
+              color: Colors.red.shade400,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            t.purchase.fetchPlansError,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(bool isDark) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 40,
+            height: 40,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFF10B981),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '加载中...',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

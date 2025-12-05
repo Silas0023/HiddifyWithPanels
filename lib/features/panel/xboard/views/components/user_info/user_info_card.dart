@@ -267,14 +267,14 @@ class _UserInfoCardState extends ConsumerState<UserInfoCard> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // 邮箱和状态
+                  // 手机号/邮箱和状态
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          userInfo.email.endsWith('@phone.com')
-                              ? userInfo.email.replaceAll('@phone.com', '')
+                          userInfo.phoneNumber?.isNotEmpty == true
+                              ? userInfo.phoneNumber!
                               : userInfo.email,
                           style: TextStyle(
                             fontSize: 18,
@@ -385,32 +385,22 @@ class _UserInfoCardState extends ConsumerState<UserInfoCard> {
                     ),
                     const SizedBox(height: 12),
                     // 过期时间
-                    if (remainingDays != null) ...[
-                      _buildInfoRow(
-                        icon: FluentIcons.calendar_clock_24_regular,
-                        label: '剩余时间',
-                        value: isExpired
-                            ? '已过期'
-                            : remainingDays == 0
-                                ? '今天到期'
-                                : '$remainingDays 天',
-                        color: isExpired
-                            ? Colors.red
-                            : remainingDays < 7
-                                ? Colors.orange
-                                : Colors.green,
-                        isDark: isDark,
-                        isWarning: isExpired || remainingDays < 7,
-                      ),
-                    ] else ...[
-                      _buildInfoRow(
-                        icon: FluentIcons.calendar_clock_24_regular,
-                        label: '剩余时间',
-                        value: '永久有效',
-                        color: Colors.purple,
-                        isDark: isDark,
-                      ),
-                    ],
+                    _buildInfoRow(
+                      icon: FluentIcons.calendar_clock_24_regular,
+                      label: '剩余时间',
+                      value: remainingDays == null
+                          ? '永久有效'
+                          : userInfo.remainingTimeText,
+                      color: remainingDays == null
+                          ? Colors.purple
+                          : isExpired
+                              ? Colors.red
+                              : remainingDays < 7
+                                  ? Colors.orange
+                                  : Colors.green,
+                      isDark: isDark,
+                      isWarning: remainingDays != null && (isExpired || remainingDays < 7),
+                    ),
                   ],
                 ),
               ),

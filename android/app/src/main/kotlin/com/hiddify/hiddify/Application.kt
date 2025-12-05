@@ -10,6 +10,7 @@ import android.os.PowerManager
 import androidx.core.content.getSystemService
 import com.hiddify.hiddify.bg.AppChangeReceiver
 import go.Seq
+import io.intercom.android.sdk.Intercom
 import com.hiddify.hiddify.Application as BoxApplication
 
 class Application : Application() {
@@ -24,6 +25,11 @@ class Application : Application() {
         super.onCreate()
 
         Seq.setContext(this)
+
+        // Initialize Intercom
+        Intercom.initialize(this, "android_sdk-9ba28ac2fac7ad95a5617f64e741fbb2c8eda5a9", "jsjo8m2q")
+        Intercom.client().loginUnidentifiedUser()
+        Intercom.client().setLauncherVisibility(Intercom.Visibility.GONE)
 
         registerReceiver(AppChangeReceiver(), IntentFilter().apply {
             addAction(Intent.ACTION_PACKAGE_ADDED)

@@ -20,6 +20,16 @@ class PurchaseService {
     return await PlanService().fetchPlanData(accessToken);
   }
 
+  Future<Map<String, List<Plan>>> fetchPlanDataGrouped() async {
+    final accessToken = await getToken();
+    if (accessToken == null) {
+      print("No access token found.");
+      return {};
+    }
+
+    return await PlanService().fetchPlanDataGrouped(accessToken);
+  }
+
   Future<void> addSubscription(
     BuildContext context,
     String accessToken,
@@ -32,9 +42,13 @@ class PurchaseService {
   final OrderService _orderService = OrderService();
   final PaymentService _paymentService = PaymentService();
 
+  /// 创建订单
+  /// [userId] 用户ID
+  /// [planValue] 套餐的appleValue
+  /// [payType] 支付类型: 1=支付宝, 2=微信支付
   Future<Map<String, dynamic>?> createOrder(
-      int planId, String period, String accessToken) async {
-    return await _orderService.createOrder(accessToken, planId, period);
+      int userId, String planValue, int payType, String accessToken) async {
+    return await _orderService.createOrder(accessToken, userId, planValue, payType);
   }
 
   Future<List<dynamic>> getPaymentMethods(String accessToken) async {

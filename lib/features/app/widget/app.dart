@@ -54,11 +54,36 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver, PresLogg
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // 不再在 resumed 时刷新，只在首次启动时刷新
-    // 如果需要在应用完全退出后重新打开时刷新，可以监听 detached/resumed 状态组合
-    if (state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.resumed) {
+      // 从后台进入前台时刷新用户信息
+      _refreshUserInfoOnResume();
+    } else if (state == AppLifecycleState.detached) {
       // 应用即将完全退出，重置标记
       _hasRefreshedOnStartup = false;
+    }
+  }
+
+  Future<void> _refreshUserInfoOnResume() async {
+    try {
+      // 检查用户是否已登录
+      final isLoggedIn = ref.read(authProvider);
+
+      if (isLoggedIn) {
+        if (kDebugMode) {
+          loggy.debug('App resumed from background, refreshing user info');
+        }
+
+        // 刷新用户信息
+        await ref.read(userInfoViewModelProvider.notifier).refresh();
+
+        if (kDebugMode) {
+          loggy.debug('User info refresh completed on resume');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        loggy.warning('Failed to refresh user info on resume: $e');
+      }
     }
   }
 

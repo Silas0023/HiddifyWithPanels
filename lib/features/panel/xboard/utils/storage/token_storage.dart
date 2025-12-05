@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:hiddify/features/panel/xboard/utils/storage/user_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> storeToken(String token) async {
@@ -26,7 +27,9 @@ Future<String?> getToken() async {
 Future<void> deleteToken() async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.remove('auth_token');
+  // 同时清除用户信息
+  await deleteUserInfo();
   if (kDebugMode) {
-    print('[TokenStorage] Token deleted from storage');
+    print('[TokenStorage] Token and user info deleted from storage');
   }
 }

@@ -82,18 +82,43 @@ class OrderService {
     );
   }
 
+  /// 创建订单
+  /// [accessToken] 用户token
+  /// [userId] 用户ID
+  /// [planValue] 套餐的appleValue
+  /// [payType] 支付类型: 1=支付宝, 2=微信支付
   Future<Map<String, dynamic>> createOrder(
       String accessToken,
-      int planId,
-      String period,
+      int userId,
+      String planValue,
+      int payType,
   ) async {
-    return await _httpService.postFormRequest(
-      "/api/v1/user/order/save",
+    return await _httpService.postRequest(
+      "/hjapi/appApi/order/create",
       {
-        "plan_id": planId.toString(),
-        "period": period,
+        "userId": userId,
+        "planValue": planValue,
+        "payType": payType,
       },
-      headers: {'Authorization': accessToken},
+      headers: {
+        'Authorization': accessToken,
+        'Content-Type': 'application/json',
+      },
+    );
+  }
+
+  /// 检查订单支付状态
+  /// [accessToken] 用户token
+  /// [orderId] 订单号(tradeNo)
+  Future<Map<String, dynamic>> checkOrderStatus(
+      String accessToken,
+      String orderId,
+  ) async {
+    return await _httpService.getRequest(
+      "/hjapi/appApi/order/checkStatus?orderId=$orderId",
+      headers: {
+        'Authorization': accessToken,
+      },
     );
   }
 }

@@ -8,7 +8,8 @@ import 'package:hiddify/features/home/widget/home_page.dart';
 import 'package:hiddify/features/intro/widget/intro_page.dart';
 import 'package:hiddify/features/log/overview/logs_overview_page.dart';
 import 'package:hiddify/features/panel/xboard/views/components/user_info/order_page.dart';
-import 'package:hiddify/features/app_center/app_center_page.dart';
+// 隐藏应用中心
+// import 'package:hiddify/features/app_center/app_center_page.dart';
 import 'package:hiddify/features/splash/splash_screen.dart';
 
 import 'package:hiddify/features/panel/xboard/views/forget_password_view.dart';
@@ -17,6 +18,7 @@ import 'package:hiddify/features/panel/xboard/views/purchase_page.dart';
 import 'package:hiddify/features/panel/xboard/views/register_view.dart';
 import 'package:hiddify/features/panel/xboard/views/user_info_page.dart';
 import 'package:hiddify/features/customer_support/customer_support_page.dart';
+import 'package:hiddify/features/panel/xboard/views/notice_page.dart';
 
 import 'package:hiddify/features/per_app_proxy/overview/per_app_proxy_page.dart';
 import 'package:hiddify/features/profile/add/add_profile_modal.dart';
@@ -85,10 +87,11 @@ GlobalKey<NavigatorState>? dynamicRootKey = useMobileRouter ? rootNavigatorKey :
       path: "/proxies",
       name: ProxiesRoute.name,
     ),
-    TypedGoRoute<AppCenterRoute>(
-      path: "/app-center",
-      name: AppCenterRoute.name,
-    ),
+    // 隐藏应用中心
+    // TypedGoRoute<AppCenterRoute>(
+    //   path: "/app-center",
+    //   name: AppCenterRoute.name,
+    // ),
     TypedGoRoute<PurchaseRoute>(
       path: "/purchase",
       name: PurchaseRoute.name,
@@ -104,6 +107,10 @@ GlobalKey<NavigatorState>? dynamicRootKey = useMobileRouter ? rootNavigatorKey :
     TypedGoRoute<CustomerSupportRoute>(
       path: "/customer-support",
       name: CustomerSupportRoute.name,
+    ),
+    TypedGoRoute<NoticeRoute>(
+      path: "/notice",
+      name: NoticeRoute.name,
     ),
   ],
 )
@@ -148,10 +155,11 @@ class MobileWrapperRoute extends ShellRouteData {
       path: "/proxies",
       name: ProxiesRoute.name,
     ),
-    TypedGoRoute<AppCenterRoute>(
-      path: "/app-center",
-      name: AppCenterRoute.name,
-    ),
+    // 隐藏应用中心
+    // TypedGoRoute<AppCenterRoute>(
+    //   path: "/app-center",
+    //   name: AppCenterRoute.name,
+    // ),
     TypedGoRoute<PurchaseRoute>(
       path: "/purchase",
       name: PurchaseRoute.name,
@@ -183,6 +191,10 @@ class MobileWrapperRoute extends ShellRouteData {
     TypedGoRoute<CustomerSupportRoute>(
       path: "/customer-support",
       name: CustomerSupportRoute.name,
+    ),
+    TypedGoRoute<NoticeRoute>(
+      path: "/notice",
+      name: NoticeRoute.name,
     ),
   ],
 )
@@ -309,18 +321,19 @@ class ProxiesRoute extends GoRouteData {
   }
 }
 
-class AppCenterRoute extends GoRouteData {
-  const AppCenterRoute();
-  static const name = "AppCenter";
-
-  @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage(
-      name: name,
-      child: AppCenterPage(),
-    );
-  }
-}
+// 隐藏应用中心
+// class AppCenterRoute extends GoRouteData {
+//   const AppCenterRoute();
+//   static const name = "AppCenter";
+//
+//   @override
+//   Page<void> buildPage(BuildContext context, GoRouterState state) {
+//     return const NoTransitionPage(
+//       name: name,
+//       child: AppCenterPage(),
+//     );
+//   }
+// }
 
 class PurchaseRoute extends GoRouteData {
   const PurchaseRoute();
@@ -555,6 +568,20 @@ class CustomerSupportRoute extends GoRouteData {
       fullscreenDialog: true,
       name: name,
       child: CustomerSupportPage(),
+    );
+  }
+}
+
+// 定义通知路由
+class NoticeRoute extends GoRouteData {
+  const NoticeRoute();
+  static const name = "Notice";
+
+  @override
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage(
+      name: name,
+      child: NoticePage(),
     );
   }
 }

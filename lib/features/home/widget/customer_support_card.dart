@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hiddify/core/router/routes.dart';
+import 'package:hiddify/features/customer_support/intercom_service.dart';
 
 class CustomerSupportCard extends StatelessWidget {
   const CustomerSupportCard({super.key});
@@ -13,7 +13,7 @@ class CustomerSupportCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => const CustomerSupportRoute().push(context),
+          onTap: () => IntercomService.displayMessenger(),
           borderRadius: BorderRadius.circular(16),
           child: Container(
             decoration: BoxDecoration(

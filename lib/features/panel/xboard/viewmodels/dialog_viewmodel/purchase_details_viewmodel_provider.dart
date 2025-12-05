@@ -5,16 +5,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 
 class PurchaseDetailsViewModelParams {
-  final int planId;
+  final String? planValue; // 套餐的 appleValue
 
   PurchaseDetailsViewModelParams({
-    required this.planId,
+    this.planValue,
   });
 }
 
 final purchaseDetailsViewModelProvider = ChangeNotifierProvider.autoDispose
     .family<PurchaseDetailsViewModel, PurchaseDetailsViewModelParams>(
   (ref, params) => PurchaseDetailsViewModel(
-    planId: params.planId,
+    planValue: params.planValue,
   ),
 );

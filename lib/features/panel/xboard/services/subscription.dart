@@ -33,7 +33,6 @@ class Subscription {
         final profileRepository = await ref.read(profileRepositoryProvider.future);
         final profilesOverviewNotifier = ref.read(profilesOverviewNotifierProvider.notifier);
         final addProfileNotifier = ref.read(addProfileProvider.notifier);
-        final activeProfileNotifier = ref.read(activeProfileProvider.notifier);
 
         // 删除旧的订阅配置
         final profilesResult = await profileRepository.watchAll().first;
@@ -48,7 +47,7 @@ class Subscription {
         // 添加新的订阅链接（使用之前保存的 notifier）
         await addProfileNotifier.add(newSubscriptionLink);
 
-        // 获取新添加的配置文件并设置为活动配置文件
+        // 获取新添加的配置文件
         final newProfilesResult = await profileRepository.watchAll().first;
         final newProfiles = newProfilesResult.getOrElse((_) => []);
         final newProfile = newProfiles.firstWhere(
@@ -62,9 +61,12 @@ class Subscription {
           },
         );
 
-        // 更新活跃配置文件状态（使用之前保存的 notifier）
-        // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
-        activeProfileNotifier.update((_) => newProfile);
+        // 显式设置新配置为活动配置（确保即使有其他配置存在也能正确激活）
+        await profileRepository.setAsActive(newProfile.id).run();
+        print('[Subscription] 已将配置设置为活动: ${newProfile.id}');
+
+        // 刷新 activeProfileProvider 以确保读取最新状态
+        ref.invalidate(activeProfileProvider);
 
         print('[Subscription] activeProfile 已更新为新订阅配置: ${newProfile.name}');
 
@@ -118,6 +120,15 @@ class Subscription {
     WidgetRef ref,
   ) async {
     await _handleSubscription(context, ref, _subscriptionService.getSubscriptionLink);
+  }
+
+  // 使用直接提供的订阅链接更新订阅（用于登录时直接获取到subscribeUrl的情况）
+  static Future<void> updateSubscriptionWithUrl(
+    BuildContext context,
+    WidgetRef ref,
+    String subscribeUrl,
+  ) async {
+    await _handleSubscription(context, ref, (_) async => subscribeUrl);
   }
 
   // 重置订阅的方法

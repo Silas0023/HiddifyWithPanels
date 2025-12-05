@@ -8,6 +8,7 @@ import 'package:hiddify/core/preferences/general_preferences.dart';
 import 'package:hiddify/core/router/router.dart';
 import 'package:hiddify/core/router/routes.dart';
 import 'package:hiddify/features/auto_start/notifier/auto_start_notifier.dart';
+import 'package:hiddify/features/customer_support/intercom_service.dart';
 import 'package:hiddify/features/common/general_pref_tiles.dart';
 import 'package:hiddify/utils/utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -27,7 +28,7 @@ class GeneralSettingTiles extends HookConsumerWidget {
         ListTile(
           title: const Text('客服支持'),
           leading: const Icon(FluentIcons.chat_help_24_regular),
-          onTap: () => const CustomerSupportRoute().push(context),
+          onTap: () => IntercomService.displayMessenger(),
         ),
         SwitchListTile(
           title: Text(t.settings.general.autoIpCheck),

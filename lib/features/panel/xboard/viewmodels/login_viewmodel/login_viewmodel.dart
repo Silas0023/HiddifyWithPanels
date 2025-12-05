@@ -1,9 +1,11 @@
 // viewmodels/login_viewmodel.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/features/panel/xboard/services/auth_provider.dart';
 import 'package:hiddify/features/panel/xboard/services/http_service/auth_service.dart';
 import 'package:hiddify/features/panel/xboard/services/subscription.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
+import 'package:hiddify/features/panel/xboard/utils/storage/user_storage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -133,39 +135,73 @@ class LoginViewModel extends ChangeNotifier {
     try {
       final result = await _authService.loginWithPhone(phone, code);
 
+      // 检查API返回的错误码
+      final responseCode = result['code'];
+      if (responseCode != null && responseCode != 200) {
+        final errorMessage = result['message']?.toString() ?? '登录失败';
+        throw Exception(errorMessage);
+      }
+
+      // 从响应数据中提取信息
+      final data = result['data'] as Map<String, dynamic>?;
+      if (data == null) {
+        throw Exception("登录失败：无效的响应数据");
+      }
+
       String? authData;
       String? token;
+      String? subscribeUrl;
 
-      // 查找 authData 和 token 的方法
-      void findAuthData(Map<String, dynamic> json) {
+      // 查找认证数据和订阅链接
+      void findData(Map<String, dynamic> json) {
         json.forEach((key, value) {
+          if (key == 'authData' && value is String) {
+            authData = value;
+          }
           if (key == 'auth_data' && value is String) {
             authData = value;
           }
           if (key == 'token' && value is String) {
             token = value;
           }
+          if (key == 'subscribeUrl' && value is String) {
+            subscribeUrl = value;
+          }
           if (value is Map<String, dynamic>) {
-            findAuthData(value);
+            findData(value);
           }
         });
       }
 
-      findAuthData(result);
+      findData(result);
 
       // 如果找到了 token，使用 token 作为认证数据
-      // 如果同时有 auth_data 和 token，优先使用 auth_data
-      if (authData != null || token != null) {
-        final authToken = authData ?? token!;
+      // 如果同时有 authData 和 token，优先使用 token
+      if (token != null || authData != null) {
+        final authToken = token ?? authData!;
         await storeToken(authToken);
 
-        // 使用封装好的 Subscription 来更新订阅
-        // ignore: use_build_context_synchronously
-        await Subscription.updateSubscription(context, ref);
+        // 保存用户信息（包括用户ID）
+        await storeUserInfo(data);
+        // 单独保存用户ID以便快速访问
+        final userId = data['id'] as int?;
+        if (userId != null) {
+          await storeUserId(userId);
+          if (kDebugMode) {
+            print('[LoginViewModel] 用户ID已保存: $userId');
+          }
+        }
+
+        // 使用登录响应中的 subscribeUrl 更新订阅
+        if (subscribeUrl != null && subscribeUrl!.isNotEmpty) {
+          // ignore: use_build_context_synchronously
+          await Subscription.updateSubscriptionWithUrl(context, ref, subscribeUrl!);
+        }
+
         // 更新 authProvider 状态为已登录
         ref.read(authProvider.notifier).state = true;
       } else {
-        throw Exception("Invalid authentication data.");
+        throw Exception("登录失败：无效的认证数据");
       }
     } catch (e) {
       rethrow;

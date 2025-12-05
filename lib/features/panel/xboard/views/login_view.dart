@@ -25,18 +25,13 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  bool _obscurePassword = true;
-  bool _isPhoneMode = true; // 登录模式: false=邮箱密码, true=手机号验证码
+  // 只保留手机号登录模式
   int _countdown = 0; // 验证码倒计时
   bool _isSendingCode = false; // 发送验证码的 loading 状态
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // 登录模式切换动画
-  late AnimationController _switchAnimationController;
-  late Animation<double> _switchFadeAnimation;
-  late Animation<Offset> _switchSlideAnimation;
 
   // Typing animation
   final List<String> _features = [
@@ -56,13 +51,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
   void initState() {
     super.initState();
 
-    // 如果是手机登录模式，清空输入框
+    // 清空输入框
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_isPhoneMode) {
-        final loginViewModel = ref.read(loginViewModelProvider);
-        loginViewModel.usernameController.clear();
-        loginViewModel.passwordController.clear();
-      }
+      final loginViewModel = ref.read(loginViewModelProvider);
+      loginViewModel.usernameController.clear();
+      loginViewModel.passwordController.clear();
     });
 
     _animationController = AnimationController(
@@ -77,28 +70,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
     _animationController.forward();
-
-    // 登录模式切换动画
-    _switchAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _switchFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _switchAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-    _switchSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _switchAnimationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-    _switchAnimationController.forward();
 
     // Typing animation controller
     _typingController = AnimationController(
@@ -179,8 +150,8 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
         });
       }
 
-      // 检查返回状态 - 只检查 status 字段即可
-      if (result['status'] == 200) {
+      // 检查返回状态 - 检查 code 或 status 字段
+      if (result['code'] == 200 || result['status'] == 200) {
         // 开始倒计时
         setState(() {
           _countdown = 60;
@@ -220,7 +191,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
   @override
   void dispose() {
     _animationController.dispose();
-    _switchAnimationController.dispose();
     _typingController.dispose();
     _cursorController.dispose();
     super.dispose();
@@ -245,20 +215,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFFF8FAFC),
-              const Color(0xFFEFF6FF),
-              const Color(0xFFE0F2FE),
-              Colors.white.withOpacity(0.95),
-            ],
-          ),
-        ),
-        child: LayoutBuilder(
+      body: SizedBox.expand(
+        child: Container(
+          color: Colors.white,
+          child: LayoutBuilder(
           builder: (context, constraints) {
             final isWideScreen = constraints.maxWidth > 900;
 
@@ -300,26 +260,21 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                 ],
               );
             } else {
-              // Narrow screen: original centered layout
-              return Center(
+              // Narrow screen: 简洁布局，无外层容器
+              return SafeArea(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: SlideTransition(
                       position: _slideAnimation,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: constraints.maxWidth > 600 ? 480 : constraints.maxWidth * 0.9,
-                        ),
-                        child: _buildGlassCard(
-                          context,
-                          loginViewModel,
-                          t,
-                          domainCheckViewModel,
-                          constraints,
-                          isDark,
-                        ),
+                      child: _buildMobileLoginForm(
+                        context,
+                        loginViewModel,
+                        t,
+                        domainCheckViewModel,
+                        constraints,
+                        isDark,
                       ),
                     ),
                   ),
@@ -327,6 +282,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
               );
             }
           },
+        ),
         ),
       ),
     );
@@ -484,6 +440,336 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
     );
   }
 
+  // 手机端简洁登录表单
+  Widget _buildMobileLoginForm(
+    BuildContext context,
+    LoginViewModel loginViewModel,
+    Translations t,
+    DomainCheckViewModel domainCheckViewModel,
+    BoxConstraints constraints,
+    bool isDark,
+  ) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 60),
+          // Logo 和标题
+          Center(
+            child: Column(
+              children: [
+                // 火箭图标
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF0EA5E9),
+                        Color(0xFF0284C7),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0EA5E9).withAlpha(77),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.rocket_launch_rounded,
+                    size: 36,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  '小火箭',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '安全 · 高速 · 稳定',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 50),
+          // 手机号输入
+          _buildModernPhoneField(loginViewModel),
+          const SizedBox(height: 16),
+          // 验证码输入
+          _buildModernCodeField(loginViewModel),
+          const SizedBox(height: 12),
+          // 提示文字
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '未注册的手机号将自动创建账号',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // 登录按钮
+          _buildModernLoginButton(loginViewModel, domainCheckViewModel, t),
+          const SizedBox(height: 40),
+          // 底部装饰
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 1,
+                  color: Colors.grey.shade300,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '安全登录',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 40,
+                  height: 1,
+                  color: Colors.grey.shade300,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 现代风格手机号输入框
+  Widget _buildModernPhoneField(LoginViewModel loginViewModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: TextFormField(
+        controller: loginViewModel.usernameController,
+        keyboardType: TextInputType.phone,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF1A1A2E),
+          letterSpacing: 1,
+        ),
+        decoration: InputDecoration(
+          hintText: '请输入手机号',
+          hintStyle: TextStyle(
+            color: Colors.grey.shade400,
+            fontWeight: FontWeight.normal,
+          ),
+          prefixIcon: Icon(
+            Icons.phone_iphone_rounded,
+            color: Colors.grey.shade400,
+            size: 22,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return '请输入手机号';
+          }
+          if (!RegExp(r'^1[3-9]\d{9}$').hasMatch(value)) {
+            return '请输入有效的手机号';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  // 现代风格验证码输入框
+  Widget _buildModernCodeField(LoginViewModel loginViewModel) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: loginViewModel.passwordController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF1A1A2E),
+                letterSpacing: 4,
+              ),
+              decoration: InputDecoration(
+                hintText: '验证码',
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.normal,
+                  letterSpacing: 0,
+                ),
+                prefixIcon: Icon(
+                  Icons.verified_rounded,
+                  color: Colors.grey.shade400,
+                  size: 22,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return '请输入验证码';
+                }
+                if (value.length != 6) {
+                  return '请输入6位验证码';
+                }
+                return null;
+              },
+            ),
+          ),
+          Container(
+            height: 30,
+            width: 1,
+            color: Colors.grey.shade300,
+          ),
+          _isSendingCode
+              ? const SizedBox(
+                  width: 100,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0EA5E9)),
+                      ),
+                    ),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _countdown > 0 ? null : () => _sendVerificationCode(loginViewModel),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF0EA5E9),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: Text(
+                    _countdown > 0 ? '${_countdown}s' : '获取验证码',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _countdown > 0 ? Colors.grey.shade400 : const Color(0xFF0EA5E9),
+                    ),
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+
+  // 现代风格登录按钮
+  Widget _buildModernLoginButton(
+    LoginViewModel loginViewModel,
+    DomainCheckViewModel domainCheckViewModel,
+    Translations t,
+  ) {
+    final isEnabled = domainCheckViewModel.isSuccess && !loginViewModel.isLoading;
+
+    return GestureDetector(
+      onTap: isEnabled
+          ? () async {
+              if (!_formKey.currentState!.validate()) return;
+
+              try {
+                final phone = loginViewModel.usernameController.text.trim();
+                final code = loginViewModel.passwordController.text.trim();
+                await loginViewModel.loginWithPhone(phone, code, context, ref);
+
+                if (context.mounted) {
+                  context.go('/');
+                }
+              } catch (e) {
+                _showErrorSnackbar(context, '登录失败: $e', const Color(0xFFEF4444));
+              }
+            }
+          : null,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: isEnabled
+              ? const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Color(0xFF0EA5E9),
+                    Color(0xFF0284C7),
+                  ],
+                )
+              : null,
+          color: isEnabled ? null : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0EA5E9).withAlpha(102),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: loginViewModel.isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  isEnabled ? '登 录' : '连接中...',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    letterSpacing: 4,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  // 宽屏版登录卡片（带容器）
   Widget _buildGlassCard(
     BuildContext context,
     LoginViewModel loginViewModel,
@@ -516,174 +802,26 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           ),
         ],
       ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(context, t, constraints, isDark),
-                const SizedBox(height: 32),
-                _buildLoginModeSwitcher(isDark),
-                const SizedBox(height: 32),
-                FadeTransition(
-                  opacity: _switchFadeAnimation,
-                  child: SlideTransition(
-                    position: _switchSlideAnimation,
-                    child: _isPhoneMode
-                        ? _buildPhoneField(context, loginViewModel, isDark)
-                        : _buildUsernameField(context, loginViewModel, t, isDark),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FadeTransition(
-                  opacity: _switchFadeAnimation,
-                  child: SlideTransition(
-                    position: _switchSlideAnimation,
-                    child: _isPhoneMode
-                        ? _buildVerificationCodeField(context, loginViewModel, isDark)
-                        : _buildPasswordField(context, loginViewModel, t, isDark),
-                  ),
-                ),
-                if (!_isPhoneMode) ...[
-                  const SizedBox(height: 20),
-                  FadeTransition(
-                    opacity: _switchFadeAnimation,
-                    child: SlideTransition(
-                      position: _switchSlideAnimation,
-                      child: _buildRememberMeRow(loginViewModel, t, isDark),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 36),
-                _buildLoginButton(
-                  context,
-                  loginViewModel,
-                  domainCheckViewModel,
-                  t,
-                  isDark,
-                ),
-                // 只在邮箱登录模式显示忘记密码和注册链接
-                if (!_isPhoneMode) ...[
-                  const SizedBox(height: 28),
-                  _buildFooterLinks(context, t, isDark),
-                ],
-              ],
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(context, t, constraints, isDark),
+            const SizedBox(height: 32),
+            _buildPhoneField(context, loginViewModel, isDark),
+            const SizedBox(height: 24),
+            _buildVerificationCodeField(context, loginViewModel, isDark),
+            const SizedBox(height: 36),
+            _buildLoginButton(
+              context,
+              loginViewModel,
+              domainCheckViewModel,
+              t,
+              isDark,
             ),
-          ),
-    );
-  }
-
-  // 登录模式切换器
-  Widget _buildLoginModeSwitcher(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildModeButton(
-              '手机登录',
-              Icons.phone_android_outlined,
-              _isPhoneMode,
-              () async {
-                if (_isPhoneMode) return;
-                final loginViewModel = ref.read(loginViewModelProvider);
-                await _switchAnimationController.reverse();
-                setState(() {
-                  _isPhoneMode = true;
-                  // 切换到手机登录时清空输入框
-                  loginViewModel.usernameController.clear();
-                  loginViewModel.passwordController.clear();
-                });
-                _switchAnimationController.forward();
-              },
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: _buildModeButton(
-              '邮箱登录',
-              Icons.email_outlined,
-              !_isPhoneMode,
-              () async {
-                if (!_isPhoneMode) return;
-                final loginViewModel = ref.read(loginViewModelProvider);
-                await _switchAnimationController.reverse();
-                setState(() {
-                  _isPhoneMode = false;
-                });
-                // 切换到邮箱登录时加载保存的账号密码
-                loginViewModel.loadEmailCredentials();
-                _switchAnimationController.forward();
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModeButton(String text, IconData icon, bool isSelected, VoidCallback onTap) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        splashColor: const Color(0xFF0EA5E9).withOpacity(0.1),
-        highlightColor: const Color(0xFF0EA5E9).withOpacity(0.05),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF0EA5E9).withOpacity(0.15),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                  child: Icon(
-                    icon,
-                    size: 18,
-                    color: isSelected ? const Color(0xFF0EA5E9) : const Color(0xFF64748B),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                  ),
-                  child: Text(text),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
@@ -905,8 +1043,8 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
         if (value == null || value.trim().isEmpty) {
           return '请输入验证码';
         }
-        if (value.length != 4) {
-          return '请输入4位验证码';
+        if (value.length != 6) {
+          return '请输入6位验证码';
         }
         return null;
       },
@@ -954,210 +1092,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
             height: 1.3,
           ),
           textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUsernameField(
-    BuildContext context,
-    LoginViewModel loginViewModel,
-    Translations t,
-    bool isDark,
-  ) {
-    return TextFormField(
-      controller: loginViewModel.usernameController,
-      style: const TextStyle(
-        color: Color(0xFF0F172A),
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-      ),
-      decoration: InputDecoration(
-        labelText: t.login.username,
-        labelStyle: const TextStyle(
-          color: Color(0xFF64748B),
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-        ),
-        prefixIcon: const Icon(
-          Icons.person_outline_rounded,
-          color: Color(0xFF0EA5E9),
-          size: 20,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF0EA5E9),
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 2,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        errorStyle: const TextStyle(
-          fontSize: 12,
-          color: Color(0xFFEF4444),
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return t.login.usernameRequired;
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildPasswordField(
-    BuildContext context,
-    LoginViewModel loginViewModel,
-    Translations t,
-    bool isDark,
-  ) {
-    return TextFormField(
-      controller: loginViewModel.passwordController,
-      obscureText: _obscurePassword,
-      style: const TextStyle(
-        color: Color(0xFF0F172A),
-        fontSize: 15,
-        fontWeight: FontWeight.w400,
-      ),
-      decoration: InputDecoration(
-        labelText: t.login.password,
-        labelStyle: const TextStyle(
-          color: Color(0xFF64748B),
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-        ),
-        prefixIcon: const Icon(
-          Icons.lock_outline_rounded,
-          color: Color(0xFF0EA5E9),
-          size: 20,
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: const Color(0xFF64748B),
-            size: 20,
-          ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8FAFC),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFF0EA5E9),
-            width: 2,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 1.5,
-          ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: Color(0xFFEF4444),
-            width: 2,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        errorStyle: const TextStyle(
-          fontSize: 12,
-          color: Color(0xFFEF4444),
-          fontWeight: FontWeight.w400,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return t.login.passwordRequired;
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildRememberMeRow(LoginViewModel loginViewModel, Translations t, bool isDark) {
-    return Row(
-      children: [
-        SizedBox(
-          height: 18,
-          width: 18,
-          child: Checkbox(
-            value: loginViewModel.isRememberMe,
-            onChanged: (value) {
-              loginViewModel.toggleRememberMe(value ?? false);
-            },
-            fillColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF0EA5E9);
-              }
-              return Colors.transparent;
-            }),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-            side: BorderSide(
-              color: loginViewModel.isRememberMe
-                  ? const Color(0xFF0EA5E9)
-                  : const Color(0xFFCBD5E1),
-              width: 1.5,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          t.login.rememberMe,
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-          ),
         ),
       ],
     );
@@ -1214,17 +1148,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                       }
 
                       try {
-                        if (_isPhoneMode) {
-                          // 手机号验证码登录
-                          final phone = loginViewModel.usernameController.text.trim();
-                          final code = loginViewModel.passwordController.text.trim();
-                          await loginViewModel.loginWithPhone(phone, code, context, ref);
-                        } else {
-                          // 邮箱密码登录 - 使用新的 emailLogin 接口
-                          final email = loginViewModel.usernameController.text.trim();
-                          final password = loginViewModel.passwordController.text.trim();
-                          await loginViewModel.loginWithEmail(email, password, context, ref);
-                        }
+                        // 手机号验证码登录
+                        final phone = loginViewModel.usernameController.text.trim();
+                        final code = loginViewModel.passwordController.text.trim();
+                        await loginViewModel.loginWithPhone(phone, code, context, ref);
 
                         if (context.mounted) {
                           context.go('/');
@@ -1253,48 +1180,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildFooterLinks(BuildContext context, Translations t, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        TextButton(
-          onPressed: () {
-            context.go('/forget-password');
-          },
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF0EA5E9),
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 36),
-          ),
-          child: Text(
-            t.login.forgotPassword,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            context.go('/register');
-          },
-          style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFF0EA5E9),
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 36),
-          ),
-          child: Text(
-            t.login.register,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 

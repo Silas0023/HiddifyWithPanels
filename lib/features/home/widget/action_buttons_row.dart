@@ -2,6 +2,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/router/routes.dart';
+import 'package:hiddify/features/customer_support/intercom_service.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/profile/notifier/profiles_update_notifier.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -199,7 +200,7 @@ class _ActionButtonsRowState extends ConsumerState<ActionButtonsRow> {
               const Color(0xFF0EA5E9).withOpacity(0.8),
               const Color(0xFF0284C7).withOpacity(0.8),
             ],
-            onTap: () => const CustomerSupportRoute().push(context),
+            onTap: () => IntercomService.displayMessenger(),
             isDark: isDark,
           ),
           const SizedBox(width: 12),

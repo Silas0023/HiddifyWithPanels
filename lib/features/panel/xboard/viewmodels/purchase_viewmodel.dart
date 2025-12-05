@@ -4,14 +4,25 @@ import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 
 class PurchaseViewModel extends ChangeNotifier {
   final PurchaseService _purchaseService;
-  List<Plan> _plans = [];
+  Map<String, List<Plan>> _groupedPlans = {};
+  List<String> _categories = [];
   String? _errorMessage;
   bool _isLoading = false;
   bool _hasLoaded = false;
 
-  List<Plan> get plans => _plans;
+  Map<String, List<Plan>> get groupedPlans => _groupedPlans;
+  List<String> get categories => _categories;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
+
+  // 兼容旧的 plans getter
+  List<Plan> get plans {
+    final List<Plan> allPlans = [];
+    _groupedPlans.forEach((_, plans) {
+      allPlans.addAll(plans);
+    });
+    return allPlans;
+  }
 
   PurchaseViewModel({required PurchaseService purchaseService})
       : _purchaseService = purchaseService;
@@ -29,7 +40,8 @@ class PurchaseViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _plans = await _purchaseService.fetchPlanData();
+      _groupedPlans = await _purchaseService.fetchPlanDataGrouped();
+      _categories = _groupedPlans.keys.toList();
       _hasLoaded = true;
     } catch (e) {
       _errorMessage = e.toString();
