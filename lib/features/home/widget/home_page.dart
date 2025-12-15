@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:hiddify/core/localization/translations.dart';
 import 'package:hiddify/core/model/failures.dart';
 import 'package:hiddify/core/router/routes.dart';
+import 'package:hiddify/features/connection/model/connection_failure.dart';
 import 'package:hiddify/features/connection/model/connection_status.dart';
 import 'package:hiddify/features/connection/notifier/connection_notifier.dart';
 import 'package:hiddify/features/customer_support/intercom_service.dart';
@@ -58,6 +59,7 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
   late AnimationController _scaleController;
   bool _isUpdating = false;
   bool _hasShownErrorDialog = false;
+  bool _hasShownConnectionErrorDialog = false;
 
   @override
   void initState() {
@@ -645,6 +647,20 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
       }
     });
 
+    // 监听连接错误，显示错误对话框
+    ref.listen<AsyncValue>(connectionNotifierProvider, (previous, next) {
+      if (next is AsyncError) {
+        // 重置标记，允许显示新的错误
+        _hasShownConnectionErrorDialog = false;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showConnectionErrorDialog(next.error);
+        });
+      } else if (next is AsyncData) {
+        // 连接成功时重置标记
+        _hasShownConnectionErrorDialog = false;
+      }
+    });
+
     final isConnected = connectionStatus is AsyncData && connectionStatus.value is Connected;
     final isConnecting = connectionStatus is AsyncLoading;
 
@@ -1178,6 +1194,187 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => const QuickSettingsModal(),
+    );
+  }
+
+  // 从错误字符串中提取关键信息
+  String _extractErrorDetail(String errorStr) {
+    // 尝试提取最后一个冒号后的内容作为关键错误信息
+    final colonIndex = errorStr.lastIndexOf(':');
+    if (colonIndex != -1 && colonIndex < errorStr.length - 1) {
+      final detail = errorStr.substring(colonIndex + 1).trim();
+      if (detail.isNotEmpty && detail.length < 150) {
+        return detail;
+      }
+    }
+    // 如果太长，截断显示
+    if (errorStr.length > 150) {
+      return '${errorStr.substring(0, 150)}...';
+    }
+    return errorStr;
+  }
+
+  void _showConnectionErrorDialog(Object? error) {
+    if (!mounted || _hasShownConnectionErrorDialog) return;
+    _hasShownConnectionErrorDialog = true;
+
+    final isDark = widget.isDark;
+    final t = ref.read(translationsProvider);
+
+    // 获取错误信息
+    String errorTitle = '连接失败';
+    String errorMessage = '无法建立连接，请稍后重试';
+
+    // 获取原始错误字符串用于分析
+    String? rawErrorStr;
+    if (error is ConnectionFailure) {
+      final presented = error.present(t);
+      errorTitle = presented.type;
+
+      if (error is UnexpectedConnectionFailure && error.error != null) {
+        rawErrorStr = error.error.toString();
+      }
+      errorMessage = presented.message ?? rawErrorStr ?? '未知错误';
+    } else if (error != null) {
+      rawErrorStr = error.toString();
+    }
+
+    // 解析错误信息，显示友好提示
+    if (rawErrorStr != null) {
+      if (rawErrorStr.contains('missingPrivilege') || rawErrorStr.contains('missing privileges')) {
+        errorTitle = '缺少权限';
+        errorMessage = 'VPN 模式需要管理员权限。\n\n请以管理员身份重新启动应用程序或切换到系统代理模式。';
+      } else if (rawErrorStr.contains('route') && rawErrorStr.contains('file exists')) {
+        errorTitle = '路由冲突';
+        errorMessage = '检测到残留的网络路由配置。\n\n请重启设备或手动清理路由后重试。';
+      } else if (rawErrorStr.contains('configure tun interface')) {
+        errorTitle = 'TUN 接口错误';
+        errorMessage = '无法配置 TUN 网络接口。\n\n详情: ${_extractErrorDetail(rawErrorStr)}';
+      } else if (rawErrorStr.contains('tun') || rawErrorStr.contains('TUN') || rawErrorStr.contains('inbound/tun')) {
+        errorTitle = 'TUN 模式错误';
+        errorMessage = '无法创建 TUN 接口。\n\n详情: ${_extractErrorDetail(rawErrorStr)}\n\n请尝试切换到系统代理模式。';
+      } else if (rawErrorStr.contains('panic')) {
+        errorTitle = '内核崩溃';
+        errorMessage = '代理内核发生错误。\n\n详情: ${_extractErrorDetail(rawErrorStr)}\n\n请重启应用后重试。';
+      } else if (rawErrorStr.contains('connection refused')) {
+        errorTitle = '连接被拒绝';
+        errorMessage = '无法连接到代理服务。\n\n请检查配置是否正确或稍后重试。';
+      } else if (rawErrorStr.contains('timeout') || rawErrorStr.contains('Timeout')) {
+        errorTitle = '连接超时';
+        errorMessage = '连接服务器超时。\n\n请检查网络连接或尝试其他节点。';
+      } else {
+        // 显示原始错误，但截断过长的内容
+        errorMessage = rawErrorStr.length > 300 ? '${rawErrorStr.substring(0, 300)}...' : rawErrorStr;
+      }
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFEF4444).withAlpha(76),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                FluentIcons.plug_disconnected_24_filled,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              errorTitle,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 150),
+              child: SingleChildScrollView(
+                child: Text(
+                  errorMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.grey.shade400 : Colors.black54,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      _showQuickSettingsModal();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF0EA5E9),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Color(0xFF0EA5E9)),
+                      ),
+                    ),
+                    child: const Text(
+                      '切换模式',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      '知道了',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

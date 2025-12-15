@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:hiddify/core/utils/ffi_utils.dart';
 import 'package:hiddify/utils/custom_loggers.dart';
 import 'package:hiddify/utils/utils.dart';
@@ -49,6 +50,11 @@ class ConnectionPlatformSourceImpl
         });
         return isElevated;
       } else if (Platform.isLinux || Platform.isMacOS) {
+        // macOS 开发模式跳过权限检查，让 singbox core 处理
+        if (kDebugMode && Platform.isMacOS) {
+          loggy.info("macOS debug mode: skipping privilege check, letting core handle it");
+          return true;
+        }
         final euid = geteuid();
         return euid == 0;
       } else {
