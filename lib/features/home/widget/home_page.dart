@@ -57,6 +57,7 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
   late AnimationController _rotationController;
   late AnimationController _scaleController;
   bool _isUpdating = false;
+  bool _hasShownErrorDialog = false;
 
   @override
   void initState() {
@@ -634,6 +635,16 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
     final activeProxy = ref.watch(activeProxyNotifierProvider);
     final delay = activeProxy.valueOrNull?.urlTestDelay ?? 0;
 
+    // 监听用户信息获取错误，显示重试对话框
+    ref.listen<AsyncValue>(userInfoViewModelProvider, (previous, next) {
+      if (next is AsyncError && next.error is FetchUserInfoException) {
+        // 使用 addPostFrameCallback 确保在 build 完成后显示对话框
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showFetchUserInfoErrorDialog();
+        });
+      }
+    });
+
     final isConnected = connectionStatus is AsyncData && connectionStatus.value is Connected;
     final isConnecting = connectionStatus is AsyncLoading;
 
@@ -1167,6 +1178,126 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => const QuickSettingsModal(),
+    );
+  }
+
+  void _showFetchUserInfoErrorDialog() {
+    if (!mounted || _hasShownErrorDialog) return;
+    _hasShownErrorDialog = true;
+
+    final isDark = widget.isDark;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFF59E0B).withAlpha(76),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                FluentIcons.wifi_warning_24_filled,
+                color: Colors.white,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              '获取信息失败',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '无法获取用户信息，请检查网络连接后重试',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDark ? Colors.grey.shade400 : Colors.black54,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.of(dialogContext).pop();
+                      _hasShownErrorDialog = false;
+                      await _handleRefreshUserInfo();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0EA5E9),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(FluentIcons.arrow_sync_24_filled, size: 20),
+                        SizedBox(width: 8),
+                        Text('重新刷新', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      _hasShownErrorDialog = false;
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      '稍后再试',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 

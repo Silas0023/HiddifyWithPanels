@@ -303,14 +303,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF0EA5E9),
-                      Color(0xFF0284C7),
-                    ],
-                  ),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF0EA5E9).withOpacity(0.25),
@@ -319,10 +311,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.rocket_launch_rounded,
-                  size: 32,
-                  color: Colors.white,
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/rocket.png',
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -465,14 +460,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF0EA5E9),
-                        Color(0xFF0284C7),
-                      ],
-                    ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -482,10 +469,14 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.rocket_launch_rounded,
-                    size: 36,
-                    color: Colors.white,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/images/rocket.png',
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1059,14 +1050,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           height: 80,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0EA5E9),
-                Color(0xFF0284C7),
-              ],
-            ),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF0EA5E9).withOpacity(0.3),
@@ -1075,10 +1058,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
               ),
             ],
           ),
-          child: const Icon(
-            Icons.rocket_launch_rounded,
-            size: 40,
-            color: Colors.white,
+          child: ClipOval(
+            child: Image.asset(
+              'assets/images/rocket.png',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+            ),
           ),
         ),
         const SizedBox(height: 24),
