@@ -16,6 +16,8 @@ import 'package:hiddify/features/profile/data/profile_data_providers.dart';
 import 'package:hiddify/features/profile/model/profile_entity.dart';
 import 'package:hiddify/features/profile/notifier/active_profile_notifier.dart';
 import 'package:hiddify/features/proxy/active/active_proxy_notifier.dart';
+import 'package:hiddify/features/config_option/widget/quick_settings_modal.dart';
+import 'package:hiddify/utils/platform_utils.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class HomePage extends HookConsumerWidget {
@@ -709,13 +711,47 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
               userInfoAsync.when(
                 data: (userInfo) {
                   if (userInfo == null) return const SizedBox.shrink();
-                  final days = userInfo.remainingDays;
-                  return Text(
-                    days != null ? '剩余 $days 天' : '永久会员',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
+                  final int? days = userInfo.remainingDays as int?;
+                  final bool isExpired = userInfo.isExpired as bool;
+
+                  String statusText;
+                  Color statusColor;
+
+                  if (days == null) {
+                    statusText = '永久会员';
+                    statusColor = const Color(0xFF10B981);
+                  } else if (isExpired) {
+                    statusText = '已过期';
+                    statusColor = const Color(0xFFEF4444);
+                  } else if (days < 7) {
+                    statusText = '剩余 $days 天';
+                    statusColor = const Color(0xFFF59E0B);
+                  } else {
+                    statusText = '剩余 $days 天';
+                    statusColor = Colors.grey.shade500;
+                  }
+
+                  return Row(
+                    children: [
+                      if (isExpired)
+                        Container(
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.only(right: 6),
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: isExpired ? FontWeight.w600 : FontWeight.normal,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
                   );
                 },
                 loading: () => const SizedBox.shrink(),
@@ -729,9 +765,11 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
             icon: FluentIcons.shopping_bag_24_regular,
             onTap: () => const PurchaseRoute().push(context),
           ),
-          const SizedBox(width: 8),
-          // 设置按钮（下拉菜单）
-          _buildSettingsDropdown(),
+          // 设置按钮（下拉菜单）- 仅移动端显示
+          if (!PlatformUtils.isDesktop) ...[
+            const SizedBox(width: 8),
+            _buildSettingsDropdown(),
+          ],
         ],
       ),
     );
@@ -1080,10 +1118,12 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
               icon: FluentIcons.chat_help_24_filled,
               title: '在线客服',
               color: const Color(0xFF0EA5E9),
-              onTap: () => IntercomService.displayMessenger(),
+              onTap: () => PlatformUtils.isDesktop
+                  ? _showSupportEmailDialog()
+                  : IntercomService.displayMessenger(),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // 刷新用户信息
           Expanded(
             child: _buildActionCard(
@@ -1094,7 +1134,7 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
               isLoading: _isUpdating,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // 区域选择
           Expanded(
             child: _buildActionCard(
@@ -1104,7 +1144,244 @@ class _HomeContentState extends ConsumerState<_HomeContent> with TickerProviderS
               onTap: () => const ProxiesRoute().push(context),
             ),
           ),
+          const SizedBox(width: 10),
+          // 服务模式
+          Expanded(
+            child: _buildActionCard(
+              icon: FluentIcons.options_24_filled,
+              title: '服务模式',
+              color: const Color(0xFFF59E0B),
+              onTap: () => _showQuickSettingsModal(),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _showQuickSettingsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const QuickSettingsModal(),
+    );
+  }
+
+  void _showSupportEmailDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: 360,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: widget.isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(40),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 图标
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0EA5E9).withAlpha(60),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  FluentIcons.headset_24_filled,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // 标题
+              Text(
+                '联系客服',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: widget.isDark ? Colors.white : const Color(0xFF1A1A2E),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // 副标题
+              Text(
+                '如有任何问题，请发送邮件给我们',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: widget.isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // 邮箱卡片
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: widget.isDark ? const Color(0xFF252525) : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0EA5E9).withAlpha(20),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            FluentIcons.mail_24_regular,
+                            color: Color(0xFF0EA5E9),
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '客服邮箱',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: widget.isDark ? Colors.grey.shade500 : Colors.grey.shade500,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const SelectableText(
+                                'support@xiaohuojian123.xyz',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0EA5E9),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              // 按钮
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(dialogContext),
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: widget.isDark ? const Color(0xFF252525) : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '关闭',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: widget.isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Clipboard.setData(const ClipboardData(text: 'support@xiaohuojian123.xyz'));
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Row(
+                              children: [
+                                Icon(FluentIcons.checkmark_circle_24_filled, color: Colors.white, size: 20),
+                                SizedBox(width: 10),
+                                Text('邮箱地址已复制到剪贴板'),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF10B981),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            margin: const EdgeInsets.all(16),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0EA5E9).withAlpha(50),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(FluentIcons.copy_24_regular, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              '复制邮箱',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

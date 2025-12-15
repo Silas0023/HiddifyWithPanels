@@ -64,6 +64,9 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver, PresLogg
   }
 
   Future<void> _refreshUserInfoOnResume() async {
+    // 桌面端不需要后台进入前台刷新用户信息
+    if (PlatformUtils.isDesktop) return;
+
     try {
       // 检查用户是否已登录
       final isLoggedIn = ref.read(authProvider);

@@ -352,27 +352,29 @@ class ConfigOptionsPage extends HookConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          // 返回按钮
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey.shade900 : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+          // 返回按钮（仅移动端显示）
+          if (!PlatformUtils.isDesktop) ...[
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey.shade900 : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                  ),
+                ),
+                child: Icon(
+                  FluentIcons.arrow_left_24_regular,
+                  size: 20,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                 ),
               ),
-              child: Icon(
-                FluentIcons.arrow_left_24_regular,
-                size: 20,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
             ),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ],
           // 标题
           Expanded(
             child: Column(

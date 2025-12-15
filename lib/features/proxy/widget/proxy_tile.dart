@@ -20,6 +20,18 @@ class ProxyTile extends HookConsumerWidget with PresLogger {
   String _getCountryFlag(String name) {
     final nameLower = name.toLowerCase();
 
+    // 特殊节点处理（自动选择等）- 必须在国家匹配之前
+    if (nameLower.contains('自动') ||
+        nameLower.contains('auto') ||
+        nameLower.contains('select') ||
+        nameLower.contains('best') ||
+        nameLower.contains('urltest') ||
+        nameLower.contains('fallback') ||
+        nameLower.contains('load') ||
+        nameLower.contains('balance')) {
+      return '⚡'; // 闪电图标表示自动选择
+    }
+
     // 国家名称映射到国旗emoji
     final countryFlags = {
       // 亚洲

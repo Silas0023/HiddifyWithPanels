@@ -35,11 +35,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
 
   // Typing animation
   final List<String> _features = [
-    '安全的网络连接',
-    '跨平台支持',
-    '高速稳定',
-    '隐私保护',
-    '全球节点',
+    '一键起飞，畅游全球',
+    '火箭加速，秒连世界',
+    '安全护航，隐私无忧',
+    '多端同步，随时起航',
+    '全球节点，极速体验',
   ];
   int _currentFeatureIndex = 0;
   String _displayedText = '';
@@ -320,7 +320,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
                   ],
                 ),
                 child: const Icon(
-                  Icons.shield_outlined,
+                  Icons.rocket_launch_rounded,
                   size: 32,
                   color: Colors.white,
                 ),
@@ -340,7 +340,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           const SizedBox(height: 64),
           // Main title
           const Text(
-            '安全可靠的网络代理解决方案',
+            '一键起飞，畅游无界网络',
             style: TextStyle(
               fontSize: 42,
               fontWeight: FontWeight.w700,
@@ -352,7 +352,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           const SizedBox(height: 24),
           // Subtitle
           Text(
-            '为您提供极致的网络体验',
+            '小火箭为您保驾护航',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w400,
@@ -398,13 +398,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
           ),
           const SizedBox(height: 64),
           // Feature list
-          _buildFeatureItem(Icons.security_rounded, '端到端加密保护'),
+          _buildFeatureItem(Icons.rocket_launch_rounded, '火箭般的连接速度'),
           const SizedBox(height: 20),
-          _buildFeatureItem(Icons.speed_rounded, '高速稳定连接'),
+          _buildFeatureItem(Icons.shield_rounded, '军事级加密保护'),
           const SizedBox(height: 20),
-          _buildFeatureItem(Icons.devices_rounded, '全平台支持'),
+          _buildFeatureItem(Icons.devices_rounded, '全平台无缝体验'),
           const SizedBox(height: 20),
-          _buildFeatureItem(Icons.public_rounded, '全球节点覆盖'),
+          _buildFeatureItem(Icons.public_rounded, '遍布全球的节点'),
         ],
       ),
     );
@@ -1076,7 +1076,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with TickerProviderStateM
             ],
           ),
           child: const Icon(
-            Icons.shield_outlined,
+            Icons.rocket_launch_rounded,
             size: 40,
             color: Colors.white,
           ),
